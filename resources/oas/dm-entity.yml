@@ -61,8 +61,6 @@ components:
             - EMAIL
         value:
           type: string
-        shortcut:
-          type: string
     Account:
       type: object
       description: Банковские счета клиента
@@ -105,8 +103,6 @@ components:
         deferment:
           type: integer
           format: int32
-        shortcut:
-          type: string
     Operation:
       type: object
       description: Банковские операции по счету
