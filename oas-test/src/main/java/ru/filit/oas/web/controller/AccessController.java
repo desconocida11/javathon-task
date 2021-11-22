@@ -1,10 +1,7 @@
 package ru.filit.oas.web.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import ru.filit.oas.dm.web.controller.AccessApi;
 import ru.filit.oas.dm.web.dto.AccessDto;
 import ru.filit.oas.dm.web.dto.AccessRequestDto;
