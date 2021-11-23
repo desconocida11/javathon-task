@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  title: Сущности приложения DM
+  title: Транспортные объекты общие сервисов CRM-BH и DM
   version: 1.0.0
 paths:
   /dummy:
@@ -10,7 +10,33 @@ paths:
           description: Фиктивный
 components:
   schemas:
-    Client:
+    ClientSearchDto:
+      type: object
+      description: Параметры поиска клиентов
+      properties:
+        id:
+          type: string
+        lastname:
+          type: string
+        firstname:
+          type: string
+        patronymic:
+          type: string
+        birthDate:
+          type: string
+        passport:
+          type: string
+        inn:
+          type: string
+    ClientIdDto:
+      type: object
+      description: Запрос по clientId
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    ClientDto:
       type: object
       description: Клиент банка, Физ. лицо
       required:
@@ -31,8 +57,7 @@ components:
         patronymic:
           type: string
         birthDate:
-          type: integer
-          format: int64
+          type: string
         passportSeries:
           type: string
         passportNumber:
@@ -41,7 +66,7 @@ components:
           type: string
         address:
           type: string
-    Contact:
+    ContactDto:
       type: object
       description: Контактные данные клиента
       required:
@@ -56,12 +81,19 @@ components:
           type: string
         type:
           type: string
-          enum:
-            - PHONE
-            - EMAIL
         value:
           type: string
-    Account:
+        shortcut:
+          type: string
+    AccountNumberDto:
+      type: object
+      description: Запрос по accountNumber
+      required:
+        - accountNumber
+      properties:
+        accountNumber:
+          type: string
+    AccountDto:
       type: object
       description: Банковские счета клиента
       required:
@@ -78,32 +110,38 @@ components:
           type: string
         type:
           type: string
-          enum:
-            - PAYMENT
-            - BUDGET
-            - TRANSIT
-            - OVERDRAFT
         currency:
           type: string
-          enum:
-            - RUR
         status:
           type: string
-          enum:
-            - INACTIVE
-            - ACTIVE
-            - LOCKED
-            - CLOSED
         openDate:
-          type: integer
-          format: int64
+          type: string
         closeDate:
-          type: integer
-          format: int64
+          type: string
         deferment:
-          type: integer
-          format: int32
-    Operation:
+          type: string
+        shortcut:
+          type: string
+    CurrentBalanceDto:
+      type: object
+      description: Значение текущего баланса счета
+      required:
+        - balanceAmount
+      properties:
+        balanceAmount:
+          type: string
+    OperationSearchDto:
+      type: object
+      description: Запрос операций по счету
+      required:
+        - accountNumber
+        - quantity
+      properties:
+        accountNumber:
+          type: string
+        quantity:
+          type: string
+    OperationDto:
       type: object
       description: Банковские операции по счету
       required:
@@ -114,44 +152,33 @@ components:
       properties:
         type:
           type: string
-          enum:
-            - RECEIPT
-            - EXPENSE
         accountNumber:
           type: string
         operDate:
-          type: integer
-          format: int64
+          type: string
         amount:
-          type: number
+          type: string
         description:
           type: string
-    AccountBalance:
+    ClientLevelDto:
       type: object
-      description: Подбитые балансы на счетах на начало месяца
+      description: Уровни клиентов
       required:
-        - accountNumber
-        - balanceDate
+        - level
+        - accuntNumber
+        - avgBalance
+      properties:
+        level:
+          type: string
+        accuntNumber:
+          type: string
+        avgBalance:
+          type: string
+    LoanPaymentDto:
+      type: object
+      description: Начисленные платежи по кредиту
+      required:
         - amount
       properties:
-        accountNumber:
-          type: string
-        balanceDate:
-          type: integer
-          format: int64
         amount:
-          type: number
-    Access:
-      type: object
-      description: Права доступа к полям сущностей
-      required:
-        - role
-        - entity
-        - property
-      properties:
-        role:
-          type: string
-        entity:
-          type: string
-        property:
           type: string
