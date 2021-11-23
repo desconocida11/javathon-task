@@ -1,6 +1,7 @@
 *.idea
 *.iws
 *.iml
+/target
 *.ipr
 
 *.log
