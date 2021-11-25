@@ -1,0 +1,12 @@
+-
+  username: manager
+  password: password
+  role: MANAGER
+-
+  username: supervisor
+  password: password
+  role: SUPERVISOR
+-
+  username: auditor
+  password: password
+  role: AUDITOR
