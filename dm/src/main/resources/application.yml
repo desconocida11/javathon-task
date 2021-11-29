@@ -21,3 +21,7 @@ server:
       enabled: true
       force: true
     register-default-servlet: true
+
+dm:
+  repo:
+    location: resources/db/

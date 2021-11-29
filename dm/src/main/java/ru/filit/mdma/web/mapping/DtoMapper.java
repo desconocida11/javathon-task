@@ -1,6 +1,5 @@
 package ru.filit.mdma.web.mapping;
 
-import java.lang.annotation.Target;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,11 +14,15 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
+import ru.filit.mdma.model.entity.Account;
 import ru.filit.mdma.model.entity.Client;
 import ru.filit.mdma.model.entity.Contact;
+import ru.filit.mdma.model.entity.Operation;
+import ru.filit.mdma.web.dto.AccountDto;
 import ru.filit.mdma.web.dto.ClientDto;
 import ru.filit.mdma.web.dto.ClientSearchDto;
 import ru.filit.mdma.web.dto.ContactDto;
+import ru.filit.mdma.web.dto.OperationDto;
 
 /**
  * @author A.Khalitova 26-Nov-2021
@@ -66,6 +69,20 @@ public abstract class DtoMapper {
   public abstract ContactDto contactToContactDto(Contact contact);
 
   public abstract Contact contactDtoToContact(ContactDto contactDto);
+
+  public abstract AccountDto accountToAccountDto(Account account);
+
+  @Mapping(target = "operDate", expression = "java(fromInstant(operation.getOperDate()))")
+  public abstract OperationDto operationToOperationDto(Operation operation);
+
+  @AfterMapping
+  protected void setShortcut(Account account, @MappingTarget AccountDto accountDto) {
+    String number = account.getNumber();
+    if (number == null || number.length() < 4) {
+      return;
+    }
+    accountDto.setShortcut(number.substring(number.length() - 4));
+  }
 
   @AfterMapping
   protected void setShortcut(Contact contact, @MappingTarget ContactDto contactDto) {

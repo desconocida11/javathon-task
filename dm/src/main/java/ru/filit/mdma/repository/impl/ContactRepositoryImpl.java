@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Contact;
 import ru.filit.mdma.repository.ContactRepository;
 import ru.filit.mdma.service.EntityRepo;
+import ru.filit.mdma.web.exception.ClientNotFoundException;
 
 /**
  * @author A.Khalitova 27-Nov-2021
@@ -59,7 +60,7 @@ public class ContactRepositoryImpl implements ContactRepository {
   public synchronized Contact saveContact(Contact contact) {
     String clientId = contact.getClientId();
     if (!contacts.containsKey(clientId)) {
-      return null;
+        throw new ClientNotFoundException("Клиент не найден");
     }
     List<Contact> contactsByClientId = contacts.get(clientId);
     if (contact.getId() == null) {

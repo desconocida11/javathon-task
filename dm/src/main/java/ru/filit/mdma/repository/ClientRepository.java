@@ -8,10 +8,6 @@ import ru.filit.mdma.model.entity.Client;
  */
 public interface ClientRepository {
 
-  /**
-   * @param id клиента
-   * @return Объект клиента или null, если клиент не найден
-   */
   Client getClientById(String id);
 
   List<Client> findClientByParams(Client clientSearch);

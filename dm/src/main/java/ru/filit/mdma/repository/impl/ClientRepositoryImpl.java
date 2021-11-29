@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Client;
 import ru.filit.mdma.repository.ClientRepository;
 import ru.filit.mdma.service.EntityRepo;
+import ru.filit.mdma.web.exception.ClientNotFoundException;
 
 /**
  * @author A.Khalitova 26-Nov-2021
@@ -48,7 +49,11 @@ public class ClientRepositoryImpl implements ClientRepository {
 
   @Override
   public Client getClientById(String id) {
-    return clients.get(id);
+    Client client = clients.get(id);
+    if (client == null) {
+      throw new ClientNotFoundException("Клиент с данным id не существует");
+    }
+    return client;
   }
 
   @Override

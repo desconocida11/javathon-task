@@ -10,10 +10,6 @@ public interface ContactRepository {
 
   List<Contact> getContacts(String clientId);
 
-  /**
-   * @param contact контакт для сохранения/изменения
-   * @return Контакт с id или null, если клиента не существует
-   */
   Contact saveContact(Contact contact);
 
 }

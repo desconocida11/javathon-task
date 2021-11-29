@@ -1,12 +1,12 @@
 -
-  username: manager
-  password: password
-  role: MANAGER
+  username: "manager"
+  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
+  role: "MANAGER"
 -
-  username: supervisor
-  password: password
-  role: SUPERVISOR
+  username: "supervisor"
+  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
+  role: "SUPERVISOR"
 -
-  username: auditor
-  password: password
-  role: AUDITOR
+  username: "auditor"
+  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
+  role: "AUDITOR"

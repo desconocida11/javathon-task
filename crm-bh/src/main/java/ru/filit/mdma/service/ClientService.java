@@ -11,13 +11,12 @@ import ru.filit.mdma.web.dto.ClientSearchDto;
 import ru.filit.mdma.web.dto.ContactDto;
 import ru.filit.mdma.web.dto.LoanPaymentDto;
 import ru.filit.mdma.web.dto.OperationDto;
-import ru.filit.mdma.web.dto.OperationSearchDto;
 
 public interface ClientService {
 
-  ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto);
+  ResponseEntity<ClientDto> getClient(ClientIdDto clientIdDto);
 
-  ResponseEntity<List<ClientDto>> findClientById(ClientIdDto clientIdDto);
+  ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto);
 
   ResponseEntity<List<ContactDto>> getContact(ClientIdDto clientIdDto);
 
@@ -25,7 +24,7 @@ public interface ClientService {
 
   ResponseEntity<List<AccountDto>> getAccount(ClientIdDto clientIdDto);
 
-  ResponseEntity<List<OperationDto>> getAccountOperations(OperationSearchDto operationSearchDto);
+  ResponseEntity<List<OperationDto>> getAccountOperations(AccountNumberDto accountNumberDto);
 
   ResponseEntity<ContactDto> saveContact(ContactDto contactDto);
 
