@@ -17,6 +17,8 @@ public interface ClientService {
 
   ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto);
 
+  ResponseEntity<List<ClientDto>> findClientById(ClientIdDto clientIdDto);
+
   ResponseEntity<List<ContactDto>> getContact(ClientIdDto clientIdDto);
 
   ResponseEntity<ClientLevelDto> getClientLevel(ClientIdDto clientIdDto);
