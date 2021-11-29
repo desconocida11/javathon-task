@@ -1,8 +1,11 @@
 package ru.filit.mdma.service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import ru.filit.mdma.web.dto.ContactDto;
 import ru.filit.mdma.web.dto.LoanPaymentDto;
 import ru.filit.mdma.web.dto.OperationDto;
 import ru.filit.mdma.web.dto.OperationSearchDto;
+import ru.filit.mdma.web.mapping.DtoMapper;
 
 @AllArgsConstructor
 @Service
@@ -27,10 +31,24 @@ public class ClientServiceImpl implements ClientService {
 
   @Override
   public ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto) {
+    // TODO message if all fields are null?
+    if (Stream.of(clientSearchDto.getId(), clientSearchDto.getBirthDate(),
+        clientSearchDto.getFirstname(), clientSearchDto.getLastname(),
+        clientSearchDto.getPatronymic(), clientSearchDto.getInn(),
+        clientSearchDto.getPassport())
+        .allMatch(Objects::isNull)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
     final Mono<ResponseEntity<List<ClientDto>>> entity =
         new RequestBuilder<List<ClientDto>, ClientSearchDto>()
             .sendRequest("/client", clientSearchDto);
     return entity.block();
+  }
+
+  @Override
+  public ResponseEntity<List<ClientDto>> findClientById(ClientIdDto clientIdDto) {
+    ClientSearchDto clientSearchDto = DtoMapper.INSTANCE.idDtoToSearchDto(clientIdDto);
+    return findClient(clientSearchDto);
   }
 
   @Override

@@ -39,7 +39,7 @@ public class ClientApiImpl implements ClientApi {
   @Override
   public ResponseEntity<ClientDto> getClient(ClientIdDto clientIdDto) {
     final ResponseEntity<List<ClientDto>> client = clientService
-        .findClient(DtoMapper.INSTANCE.idDtoToSearchDto(clientIdDto));
+        .findClientById(clientIdDto);
     if (client.getStatusCode() != HttpStatus.OK
         || client.getBody() == null || client.getBody().size() != 1) {
       return ResponseEntity.status(client.getStatusCode()).build();
