@@ -1,5 +1,7 @@
 package ru.filit.mdma.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -29,6 +31,41 @@ public class ClientServiceImpl implements ClientService {
 
   private final WebClient webClient;
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Override
+  public ResponseEntity<ClientDto> getClient(ClientIdDto clientIdDto) {
+    ClientSearchDto clientSearchDto = DtoMapper.INSTANCE.idDtoToSearchDto(clientIdDto);
+    ResponseEntity<List<ClientDto>> client = findClient(clientSearchDto);
+
+    if (client.getStatusCode() != HttpStatus.OK
+        || client.getBody() == null || client.getBody().size() != 1) {
+      return ResponseEntity.status(client.getStatusCode()).build();
+    }
+    ClientDto clientDto = objectMapper.convertValue(client.getBody().get(0),
+        new TypeReference<>() {
+        });
+
+    // TODO refactor: type erasure issue, LinkedHashMap to POJO in response body
+    final ResponseEntity<List<ContactDto>> contact = getContact(clientIdDto);
+    if (contact.getStatusCode().equals(HttpStatus.OK)
+        && contact.getBody() != null) {
+      List<ContactDto> contacts = objectMapper.convertValue(contact.getBody(),
+          new TypeReference<>() {
+          });
+      clientDto.setContacts(contacts);
+    }
+    final ResponseEntity<List<AccountDto>> account = getAccount(clientIdDto);
+    if (account.getStatusCode().equals(HttpStatus.OK)
+        && account.getBody() != null) {
+      List<AccountDto> accounts = objectMapper.convertValue(account.getBody(),
+          new TypeReference<>() {
+          });
+      clientDto.setAccounts(accounts);
+    }
+    return ResponseEntity.status(HttpStatus.OK).body(clientDto);
+  }
+
   @Override
   public ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto) {
     // TODO message if all fields are null?
@@ -43,12 +80,6 @@ public class ClientServiceImpl implements ClientService {
         new RequestBuilder<List<ClientDto>, ClientSearchDto>()
             .sendRequest("/client", clientSearchDto);
     return entity.block();
-  }
-
-  @Override
-  public ResponseEntity<List<ClientDto>> findClientById(ClientIdDto clientIdDto) {
-    ClientSearchDto clientSearchDto = DtoMapper.INSTANCE.idDtoToSearchDto(clientIdDto);
-    return findClient(clientSearchDto);
   }
 
   @Override
@@ -77,7 +108,9 @@ public class ClientServiceImpl implements ClientService {
 
   @Override
   public ResponseEntity<List<OperationDto>> getAccountOperations(
-      OperationSearchDto operationSearchDto) {
+      AccountNumberDto accountNumberDto) {
+    OperationSearchDto operationSearchDto = DtoMapper.INSTANCE
+        .accountNumberToOperationSearch(accountNumberDto);
     final Mono<ResponseEntity<List<OperationDto>>> entity =
         new RequestBuilder<List<OperationDto>, OperationSearchDto>()
             .sendRequest("/client/account/operation", operationSearchDto);

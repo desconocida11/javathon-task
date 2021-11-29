@@ -9,7 +9,6 @@ import ru.filit.mdma.model.entity.Client;
 import ru.filit.mdma.repository.ClientRepository;
 import ru.filit.mdma.web.dto.ClientDto;
 import ru.filit.mdma.web.dto.ClientSearchDto;
-import ru.filit.mdma.web.exception.ClientNotFoundException;
 import ru.filit.mdma.web.exception.InvalidDataException;
 import ru.filit.mdma.web.mapping.DtoMapper;
 
@@ -50,10 +49,6 @@ public class ClientService {
   }
 
   private Client getClientOrError(String id) {
-    Client clientById = clientRepository.getClientById(id);
-    if (clientById == null) {
-      throw new ClientNotFoundException("Клиента с заданным id не существует");
-    }
-    return clientById;
+    return clientRepository.getClientById(id);
   }
 }

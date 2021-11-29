@@ -5,8 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.filit.mdma.service.AccountService;
 import ru.filit.mdma.service.ClientService;
 import ru.filit.mdma.service.ContactService;
+import ru.filit.mdma.service.OperationService;
 import ru.filit.mdma.web.dto.AccountDto;
 import ru.filit.mdma.web.dto.AccountNumberDto;
 import ru.filit.mdma.web.dto.ClientDto;
@@ -28,16 +30,22 @@ public class ClientApiImpl implements ClientApi {
 
   private final ClientService clientService;
   private final ContactService contactService;
+  private final AccountService accountService;
+  private final OperationService operationService;
 
   public ClientApiImpl(ClientService clientService,
-      ContactService contactService) {
+      ContactService contactService, AccountService accountService,
+      OperationService operationService) {
     this.clientService = clientService;
     this.contactService = contactService;
+    this.accountService = accountService;
+    this.operationService = operationService;
   }
 
   @Override
   public ResponseEntity<List<AccountDto>> getAccount(ClientIdDto clientIdDto) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    List<AccountDto> account = accountService.getAccount(clientIdDto);
+    return ResponseEntity.status(HttpStatus.OK).body(account);
   }
 
   @Override
@@ -48,7 +56,8 @@ public class ClientApiImpl implements ClientApi {
   @Override
   public ResponseEntity<List<OperationDto>> getAccountOperations(
       OperationSearchDto operationSearchDto) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    List<OperationDto> operations = operationService.getAccountOperations(operationSearchDto);
+    return ResponseEntity.status(HttpStatus.OK).body(operations);
   }
 
   @Override

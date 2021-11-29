@@ -1,6 +1,5 @@
 package ru.filit.mdma.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import ru.filit.mdma.model.entity.Operation;
 
@@ -16,5 +15,5 @@ public interface OperationRepository {
    */
   List<Operation> getOperations(String accountNumber, int quantity);
 
-  List<Operation> getOperationsByPeriod(LocalDate from, LocalDate to);
+  List<Operation> getOperationsByPeriod(String accountNumber, Long fromDate, Long toDate);
 }

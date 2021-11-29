@@ -6,7 +6,6 @@ import ru.filit.mdma.model.entity.Contact;
 import ru.filit.mdma.repository.ContactRepository;
 import ru.filit.mdma.web.dto.ClientIdDto;
 import ru.filit.mdma.web.dto.ContactDto;
-import ru.filit.mdma.web.exception.ClientNotFoundException;
 import ru.filit.mdma.web.exception.InvalidDataException;
 import ru.filit.mdma.web.mapping.DtoMapper;
 
@@ -39,9 +38,6 @@ public class ContactService {
     }
     Contact savedContact = contactRepository.saveContact(
         DtoMapper.INSTANCE.contactDtoToContact(contactDto));
-    if (savedContact == null) {
-      throw new ClientNotFoundException("Клиент не найден");
-    }
     return DtoMapper.INSTANCE.contactToContactDto(savedContact);
   }
 }
