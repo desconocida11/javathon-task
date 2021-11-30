@@ -1,5 +1,6 @@
 package ru.filit.oas.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,8 +20,8 @@ public class EntityRepo {
     private static final Logger log = LoggerFactory.getLogger(EntityService.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper(
-            new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-    );
+            new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER))
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     public <T> void writeList(String filename, List<T> entities) {
         try {
