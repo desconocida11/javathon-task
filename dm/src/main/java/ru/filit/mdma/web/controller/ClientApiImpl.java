@@ -50,7 +50,8 @@ public class ClientApiImpl implements ClientApi {
 
   @Override
   public ResponseEntity<CurrentBalanceDto> getAccountBalance(AccountNumberDto accountNumberDto) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    CurrentBalanceDto balance = operationService.getAccountBalance(accountNumberDto);
+    return ResponseEntity.status(HttpStatus.OK).body(balance);
   }
 
   @Override
@@ -68,7 +69,8 @@ public class ClientApiImpl implements ClientApi {
 
   @Override
   public ResponseEntity<ClientLevelDto> getClientLevel(ClientIdDto clientIdDto) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    ClientLevelDto clientLevelDto = operationService.getClientLevel(clientIdDto);
+    return ResponseEntity.status(HttpStatus.OK).body(clientLevelDto);
   }
 
   @Override

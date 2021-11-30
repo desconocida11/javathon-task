@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -41,11 +42,13 @@ public class OperationRepositoryImpl implements OperationRepository {
 
   @Override
   public List<Operation> getOperations(String accountNumber, int quantity) {
-    return operations.stream()
+    Stream<Operation> sortedStream = operations.stream()
         .filter(operation -> operation.getAccountNumber().equals(accountNumber))
-        .sorted(Comparator.comparing(Operation::getOperDate).reversed())
-        .limit(quantity)
-        .toList();
+        .sorted(Comparator.comparing(Operation::getOperDate).reversed());
+    if (quantity > 0) {
+      sortedStream = sortedStream.limit(3);
+    }
+    return sortedStream.toList();
   }
 
   @Override
