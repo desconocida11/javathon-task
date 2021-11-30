@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ import ru.filit.mdma.util.EntityRepo;
  * @author A.Khalitova 25-Nov-2021
  */
 @Repository
+@Slf4j
 public class UserRepository {
 
   @Getter
@@ -34,5 +36,8 @@ public class UserRepository {
   public void init() {
     users.addAll(entityRepo.readList(filePath, new TypeReference<>() {
     }));
+    if (users.isEmpty()) {
+      log.info("No available users from users.yml");
+    }
   }
 }

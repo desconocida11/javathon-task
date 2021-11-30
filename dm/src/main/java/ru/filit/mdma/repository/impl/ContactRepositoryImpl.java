@@ -55,21 +55,21 @@ public class ContactRepositoryImpl implements ContactRepository {
     return contacts.get(clientId);
   }
 
-  // TODO check concurrent access
   @Override
   public synchronized Contact saveContact(Contact contact) {
     String clientId = contact.getClientId();
     if (!contacts.containsKey(clientId)) {
-        throw new ClientNotFoundException("Клиент не найден");
+      throw new ClientNotFoundException("Клиент не найден");
     }
     List<Contact> contactsByClientId = contacts.get(clientId);
     if (contact.getId() == null) {
       contact.setId(getGeneratedId());
-      contactsByClientId.add(contact);
-      return contact;
+    } else {
+      contactsByClientId.removeIf(c -> c.getId().equals(contact.getId()));
     }
-    contactsByClientId.removeIf(c -> c.getId().equals(contact.getId()));
+    // TODO fix when updating the contact
     contactsByClientId.add(contact);
+    entityRepo.writeList(getFile(), List.of(contact));
     return contact;
   }
 

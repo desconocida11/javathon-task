@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,11 +28,12 @@ import ru.filit.mdma.web.mapping.DtoMapper;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class ClientServiceImpl implements ClientService {
 
   private final WebClient webClient;
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
 
   @Override
   public ResponseEntity<ClientDto> getClient(ClientIdDto clientIdDto) {

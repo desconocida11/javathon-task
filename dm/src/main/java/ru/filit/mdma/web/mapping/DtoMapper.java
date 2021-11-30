@@ -32,32 +32,40 @@ public abstract class DtoMapper {
 
   public static final DtoMapper INSTANCE = Mappers.getMapper(DtoMapper.class);
 
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 
-  protected String fromInstant(Long timestamp) {
+  protected String fromInstant(Long timestamp, boolean withTime, String zoneId) {
     if (timestamp == null) {
       return null;
     }
+    // "Europe/Moscow" or "UTC"
     Instant instant = Instant.ofEpochMilli(timestamp);
-    LocalDate date = LocalDate.ofInstant(instant, ZoneId.of("UTC"));
-    return date.format(FORMATTER);
+    if (withTime) {
+      LocalDateTime date = LocalDateTime.ofInstant(instant, ZoneId.of(zoneId));
+      return date.format(DATE_TIME_FORMATTER);
+    } else {
+      LocalDate date = LocalDate.ofInstant(instant, ZoneId.of(zoneId));
+      return date.format(DATE_FORMATTER);
+    }
   }
 
-  // TODO search by birth date?
   protected Long toInstant(String date) {
     if (date == null) {
       return null;
     }
-    LocalDate localDate = LocalDate.parse(date, FORMATTER);
+    LocalDate localDate = LocalDate.parse(date, DATE_FORMATTER);
     LocalDateTime localDateTime = LocalDateTime.of(localDate,
         LocalTime.of(0,0,0,0));
     return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
   }
 
-  @Mapping(target = "birthDate", expression = "java(fromInstant(client.getBirthDate()))")
+  @Mapping(target = "birthDate",
+      expression = "java(fromInstant(client.getBirthDate(), false, \"UTC\"))")
   public abstract ClientDto clientToClientDto(Client client);
 
-  @Mapping(target = "birthDate", expression = "java(toInstant(clientDto.getBirthDate()))")
+  @Mapping(target = "birthDate",
+      expression = "java(toInstant(clientDto.getBirthDate()))")
   public abstract Client clientDtoToClient(ClientDto clientDto);
 
   @Mappings(value = {
@@ -70,9 +78,16 @@ public abstract class DtoMapper {
 
   public abstract Contact contactDtoToContact(ContactDto contactDto);
 
+  @Mappings(value = {
+      @Mapping(target = "openDate",
+          expression = "java(fromInstant(account.getOpenDate(), false, \"UTC\"))"),
+      @Mapping(target = "closeDate",
+          expression = "java(fromInstant(account.getCloseDate(), false, \"UTC\"))")
+  })
   public abstract AccountDto accountToAccountDto(Account account);
 
-  @Mapping(target = "operDate", expression = "java(fromInstant(operation.getOperDate()))")
+  @Mapping(target = "operDate",
+      expression = "java(fromInstant(operation.getOperDate(), true, \"Europe/Moscow\"))")
   public abstract OperationDto operationToOperationDto(Operation operation);
 
   @AfterMapping
@@ -111,7 +126,9 @@ public abstract class DtoMapper {
       return;
     }
     String[] passport = clientSearchDto.getPassport().split(" ");
-    client.setPassportSeries(passport[0]);
-    client.setPassportNumber(passport[1]);
+    if (passport.length == 2) {
+      client.setPassportSeries(passport[0]);
+      client.setPassportNumber(passport[1]);
+    }
   }
 }
