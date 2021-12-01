@@ -6,18 +6,6 @@ servers:
   - url: http://localhost:8080/api
 security:
   - basicAuth: []
-#components:
-  #schemas:
-    #common:
-      #$ref: "./common-dto.yml"
-    #crmbh:
-      #$ref: "./crm-bh-dto.yml"
-    #entities:
-      #$ref: "./crm-bh-entity.yml"
-  #securitySchemes:
-    #basicAuth:
-      #type: http
-      #scheme: basic
 paths:
   /client/find:
     post:
