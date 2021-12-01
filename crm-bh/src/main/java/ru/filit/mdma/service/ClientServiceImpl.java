@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import ru.filit.mdma.web.dto.AccountDto;
 import ru.filit.mdma.web.dto.AccountNumberDto;
@@ -42,13 +43,13 @@ public class ClientServiceImpl implements ClientService {
 
     if (client.getStatusCode() != HttpStatus.OK
         || client.getBody() == null || client.getBody().size() != 1) {
-      return ResponseEntity.status(client.getStatusCode()).build();
+      throw new ResponseStatusException(client.getStatusCode(),
+          "Error from DM app");
     }
     ClientDto clientDto = objectMapper.convertValue(client.getBody().get(0),
         new TypeReference<>() {
         });
 
-    // TODO refactor: type erasure issue, LinkedHashMap to POJO in response body
     final ResponseEntity<List<ContactDto>> contact = getContact(clientIdDto);
     if (contact.getStatusCode().equals(HttpStatus.OK)
         && contact.getBody() != null) {
@@ -70,13 +71,13 @@ public class ClientServiceImpl implements ClientService {
 
   @Override
   public ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto) {
-    // TODO message if all fields are null?
     if (Stream.of(clientSearchDto.getId(), clientSearchDto.getBirthDate(),
         clientSearchDto.getFirstname(), clientSearchDto.getLastname(),
         clientSearchDto.getPatronymic(), clientSearchDto.getInn(),
         clientSearchDto.getPassport())
         .allMatch(Objects::isNull)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "All fields are null");
     }
     final Mono<ResponseEntity<List<ClientDto>>> entity =
         new RequestBuilder<List<ClientDto>, ClientSearchDto>()
