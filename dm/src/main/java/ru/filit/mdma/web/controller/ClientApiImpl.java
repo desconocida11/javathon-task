@@ -81,7 +81,8 @@ public class ClientApiImpl implements ClientApi {
 
   @Override
   public ResponseEntity<LoanPaymentDto> getLoanPayment(AccountNumberDto accountNumberDto) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    LoanPaymentDto loanPaymentDto = operationService.getLoanPayment(accountNumberDto);
+    return ResponseEntity.status(HttpStatus.OK).body(loanPaymentDto);
   }
 
   @Override

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Account;
 import ru.filit.mdma.repository.AccountRepository;
 import ru.filit.mdma.service.EntityRepo;
+import ru.filit.mdma.web.exception.AccountNotFoundException;
 
 /**
  * @author A.Khalitova 29-Nov-2021
@@ -52,7 +53,7 @@ public class AccountRepositoryImpl implements AccountRepository {
     final Optional<Account> optionalAccount = accounts.stream()
         .filter(account -> account.getNumber().equals(accountNumber))
         .findFirst();
-    return optionalAccount.orElse(null);
+    return optionalAccount.orElseThrow(() -> new AccountNotFoundException("Account not found"));
   }
 
   private String getFile() {

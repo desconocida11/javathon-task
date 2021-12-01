@@ -3,6 +3,7 @@ package ru.filit.mdma.service;
 import static java.math.RoundingMode.HALF_UP;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import ru.filit.mdma.model.ClientLevel;
 import ru.filit.mdma.model.entity.Account;
 import ru.filit.mdma.model.entity.Account.StatusEnum;
+import ru.filit.mdma.model.entity.Account.TypeEnum;
 import ru.filit.mdma.model.entity.AccountBalance;
 import ru.filit.mdma.model.entity.Operation;
 import ru.filit.mdma.repository.AccountBalanceRepository;
@@ -27,6 +29,7 @@ import ru.filit.mdma.web.dto.AccountNumberDto;
 import ru.filit.mdma.web.dto.ClientIdDto;
 import ru.filit.mdma.web.dto.ClientLevelDto;
 import ru.filit.mdma.web.dto.CurrentBalanceDto;
+import ru.filit.mdma.web.dto.LoanPaymentDto;
 import ru.filit.mdma.web.dto.OperationDto;
 import ru.filit.mdma.web.dto.OperationSearchDto;
 import ru.filit.mdma.web.exception.InvalidDataException;
@@ -48,9 +51,7 @@ public class OperationService {
   public List<OperationDto> getAccountOperations(
       OperationSearchDto operationSearchDto) {
     String accountNumber = operationSearchDto.getAccountNumber();
-    if (accountNumber == null || accountNumber.isBlank()) {
-      throw new InvalidDataException("Отсутствует номер счета");
-    }
+    checkAccountNumber(accountNumber);
     final List<Operation> operations = operationRepository.getOperations(accountNumber,
         Integer.parseInt(operationSearchDto.getQuantity()));
     return operations.stream()
@@ -60,13 +61,40 @@ public class OperationService {
 
   public CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto) {
     String accountNumber = accountNumberDto.getAccountNumber();
-    if (accountNumber == null || accountNumber.isBlank()) {
-      throw new InvalidDataException("Отсутствует номер счета");
-    }
+    checkAccountNumber(accountNumber);
     BigDecimal balancePerDay = getBalancePerDay(LocalDate.now(), accountNumber);
     CurrentBalanceDto currentBalanceDto = new CurrentBalanceDto();
     currentBalanceDto.setBalanceAmount(commonMapper.asDto(balancePerDay));
     return currentBalanceDto;
+  }
+
+  public LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto) {
+    String accountNumber = accountNumberDto.getAccountNumber();
+    checkAccountNumber(accountNumber);
+    Account account = accountRepository.getAccount(accountNumber);
+    if (!account.getType().equals(TypeEnum.OVERDRAFT)) {
+      throw new InvalidDataException("Provided account number is not overdraft");
+    }
+    LocalDate start = commonMapper.asDateTime(account.getOpenDate()).toLocalDate();
+    LocalDate end = LocalDate.now();
+    Map<LocalDate, BigDecimal> negativeBalances = new HashMap<>();
+    for (LocalDate date = start; date.isBefore(end); date = date.plusDays(1)) {
+      BigDecimal perDay = getBalancePerDay(date, accountNumber);
+      if (perDay.signum() < 0) {
+        negativeBalances.put(date, perDay);
+      }
+    }
+    BigDecimal result = BigDecimal.valueOf(0);
+    for (Map.Entry<LocalDate, BigDecimal> date : negativeBalances.entrySet()) {
+      LocalDate loanDate = getLoanPaymentDaySkipWeekends(date.getKey(),
+          account.getDeferment());
+      if (negativeBalances.containsKey(loanDate)) {
+        result = result.add(getLoanAmount(negativeBalances.get(loanDate)));
+      }
+    }
+    LoanPaymentDto loanPaymentDto = new LoanPaymentDto();
+    loanPaymentDto.setAmount(commonMapper.asDto(result));
+    return loanPaymentDto;
   }
 
   public ClientLevelDto getClientLevel(ClientIdDto clientIdDto) {
@@ -98,6 +126,24 @@ public class OperationService {
     clientLevelDto.setLevel(clientLevel.getValue());
     clientLevelDto.setAvgBalance(commonMapper.asDto(entry.getValue()));
     return clientLevelDto;
+  }
+
+  private BigDecimal getLoanAmount(BigDecimal input) {
+    BigDecimal deferment = BigDecimal.valueOf(0.0007);
+    return input.abs().multiply(deferment);
+  }
+
+  private LocalDate getLoanPaymentDaySkipWeekends(LocalDate date, int deferment) {
+    LocalDate result = date;
+    int addedDays = 0;
+    while (addedDays < deferment) {
+      result = result.plusDays(1);
+      if (!(result.getDayOfWeek() == DayOfWeek.SATURDAY
+          || result.getDayOfWeek() == DayOfWeek.SUNDAY)) {
+        addedDays += 1;
+      }
+    }
+    return result;
   }
 
   private BigDecimal getBalancePerDay(LocalDate date, String accountNumber) {
@@ -147,5 +193,11 @@ public class OperationService {
     }
     long daysBetween = ChronoUnit.DAYS.between(start, end);
     return adb.divide(BigDecimal.valueOf(daysBetween), HALF_UP);
+  }
+
+  private void checkAccountNumber(String accountNumber) {
+    if (accountNumber == null || accountNumber.isBlank()) {
+      throw new InvalidDataException("Отсутствует номер счета");
+    }
   }
 }
