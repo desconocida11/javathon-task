@@ -1,6 +1,7 @@
 package ru.filit.mdma.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -24,7 +25,7 @@ public class EntityRepo {
 
   private final ObjectMapper objectMapper = new ObjectMapper(
       new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-  );
+  ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   public <T> void writeList(String filename, List<T> entities) {
     try {

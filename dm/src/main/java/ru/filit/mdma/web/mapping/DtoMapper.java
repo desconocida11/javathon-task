@@ -56,7 +56,7 @@ public abstract class DtoMapper {
     }
     LocalDate localDate = LocalDate.parse(date, DATE_FORMATTER);
     LocalDateTime localDateTime = LocalDateTime.of(localDate,
-        LocalTime.of(0,0,0,0));
+        LocalTime.of(0, 0, 0, 0));
     return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
   }
 
@@ -117,6 +117,7 @@ public abstract class DtoMapper {
           contactDto.setShortcut(value.substring(value.length() - 4));
         }
       }
+      default -> throw new IllegalStateException("Unexpected value: " + contact.getType());
     }
   }
 

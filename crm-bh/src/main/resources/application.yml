@@ -21,6 +21,8 @@ server:
       enabled: true
       force: true
     register-default-servlet: true
+  error:
+    include-message: always
 
 spring:
   autoconfigure:

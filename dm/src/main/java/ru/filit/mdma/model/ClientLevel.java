@@ -6,10 +6,10 @@ import java.math.BigDecimal;
  * @author A.Khalitova 30-Nov-2021
  */
 public enum ClientLevel {
-  LOW("LOW"),
-  MIDDLE("MIDDLE"),
-  SILVER("SILVER"),
-  GOLD("GOLD");
+  LOW("Low"),
+  MIDDLE("Middle"),
+  SILVER("Silver"),
+  GOLD("Gold");
 
   private final String value;
   private static final BigDecimal levelMiddle = BigDecimal.valueOf(30_000);
@@ -32,7 +32,7 @@ public enum ClientLevel {
   public static ClientLevel fromAvgDailyBalance(BigDecimal adb) {
     if (adb.compareTo(levelGold) >= 0) {
       return ClientLevel.GOLD;
-    } else if (adb.compareTo(levelSilver) >= 0 ) {
+    } else if (adb.compareTo(levelSilver) >= 0) {
       return ClientLevel.SILVER;
     } else if (adb.compareTo(levelMiddle) >= 0) {
       return ClientLevel.MIDDLE;

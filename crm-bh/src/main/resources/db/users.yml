@@ -1,12 +1,8 @@
--
-  username: "manager"
-  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
+- username: "mlsidorova"
+  password: "$2a$10$jTbRtvK58WavQ9Iy3uE3Ju.EfneZdG.XIJ0g3Qxpje3wJHAdUZvn."
   role: "MANAGER"
--
-  username: "supervisor"
-  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
+  comment: "Пароль PYx16GvL"
+- username: "agterentyeva"
+  password: "$2a$10$aMkp0uJWKIW/PZjkwHnI.OyNXp.57S99CdPDMKVa2q.fRTjX.ZNSq"
   role: "SUPERVISOR"
--
-  username: "auditor"
-  password: "$2a$12$lwoLejatA0PPfygsXcf9SuM.we8zi6MlNScFzZs1cZBtIE0p21Ske"
-  role: "AUDITOR"
+  comment: "Пароль ojwkFc2k"

@@ -1,6 +1,8 @@
 package ru.filit.mdma.repository.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -8,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.filit.mdma.model.entity.Contact;
 import ru.filit.mdma.repository.ContactRepository;
 import ru.filit.mdma.service.EntityRepo;
@@ -59,7 +63,7 @@ public class ContactRepositoryImpl implements ContactRepository {
   public synchronized Contact saveContact(Contact contact) {
     String clientId = contact.getClientId();
     if (!contacts.containsKey(clientId)) {
-      throw new ClientNotFoundException("Клиент не найден");
+      throw new ClientNotFoundException("Client not found");
     }
     List<Contact> contactsByClientId = contacts.get(clientId);
     if (contact.getId() == null) {
@@ -67,9 +71,17 @@ public class ContactRepositoryImpl implements ContactRepository {
     } else {
       contactsByClientId.removeIf(c -> c.getId().equals(contact.getId()));
     }
-    // TODO fix when updating the contact
     contactsByClientId.add(contact);
-    entityRepo.writeList(getFile(), List.of(contact));
+    try {
+      entityRepo.clearContents(getFile());
+    } catch (FileNotFoundException e) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+          "Error occurred while saving the contact");
+    }
+    entityRepo.writeList(getFile(), contacts.values()
+        .stream()
+        .flatMap(Collection::stream)
+        .toList());
     return contact;
   }
 

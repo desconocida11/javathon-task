@@ -87,6 +87,7 @@ components:
           type: string
           enum:
             - RUR
+          default: RUR
         status:
           type: string
           enum:

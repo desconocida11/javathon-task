@@ -1,5 +1,6 @@
 package ru.filit.mdma.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -23,8 +24,12 @@ public class EntityRepo {
   private static final Logger log = LoggerFactory.getLogger(EntityRepo.class);
 
   private final ObjectMapper objectMapper = new ObjectMapper(
-      new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-  );
+      new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER))
+      .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+  public void clearContents(String filename) throws FileNotFoundException {
+    new PrintWriter(filename).close();
+  }
 
   public <T> void writeList(String filename, List<T> entities) {
     try {

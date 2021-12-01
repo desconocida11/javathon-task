@@ -39,6 +39,7 @@ import ru.filit.mdma.web.mapping.DtoMapper;
 @Service
 @AllArgsConstructor
 public class OperationService {
+
   private final OperationRepository operationRepository;
   private final AccountRepository accountRepository;
   private final AccountBalanceRepository accountBalanceRepository;
@@ -79,10 +80,10 @@ public class OperationService {
         .collect(Collectors.toList());
     Map<String, BigDecimal> avgPerAccount = new HashMap<>();
     accounts.forEach(account -> {
-          String accountNumber = account.getNumber();
-          BigDecimal avg = getAvgDailyBalance(accountNumber);
-          avgPerAccount.put(accountNumber, avg);
-        });
+      String accountNumber = account.getNumber();
+      BigDecimal avg = getAvgDailyBalance(accountNumber);
+      avgPerAccount.put(accountNumber, avg);
+    });
     Optional<Entry<String, BigDecimal>> max = avgPerAccount.entrySet()
         .stream()
         .max(Entry.comparingByValue());
@@ -110,6 +111,7 @@ public class OperationService {
       switch (operation.getType()) {
         case EXPENSE -> amount = amount.subtract(operation.getAmount());
         case RECEIPT -> amount = amount.add(operation.getAmount());
+        default -> throw new IllegalStateException("Unexpected value: " + operation.getType());
       }
     }
     return amount;

@@ -26,8 +26,8 @@ public class ClientService {
 
   public List<ClientDto> findClients(ClientSearchDto clientSearchDto) {
     final Client clientSearch = DtoMapper.INSTANCE.clientSearchDtoToClient(clientSearchDto);
-    if (clientSearch.getId() != null &&
-        Stream.of(clientSearch.getBirthDate(),
+    if (clientSearch.getId() != null
+        && Stream.of(clientSearch.getBirthDate(),
             clientSearch.getFirstname(), clientSearch.getLastname(),
             clientSearch.getPatronymic(), clientSearch.getInn(),
             clientSearch.getPassportNumber(), clientSearch.getPassportSeries())
