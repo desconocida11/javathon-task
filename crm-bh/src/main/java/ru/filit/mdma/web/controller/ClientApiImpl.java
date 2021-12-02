@@ -28,31 +28,39 @@ public class ClientApiImpl implements ClientApi {
 
   @Override
   public ResponseEntity<List<ClientDto>> findClient(ClientSearchDto clientSearchDto) {
-    return clientService.findClient(clientSearchDto);
+    List<ClientDto> client = clientService.findClient(clientSearchDto);
+    return ResponseEntity.ok(client);
   }
 
   @Override
   public ResponseEntity<ClientDto> getClient(ClientIdDto clientIdDto) {
-    return clientService.getClient(clientIdDto);
+    ClientDto client = clientService.getClient(clientIdDto);
+    return ResponseEntity.ok(client);
   }
 
   @Override
   public ResponseEntity<ClientLevelDto> getClientLevel(ClientIdDto clientIdDto) {
-    return clientService.getClientLevel(clientIdDto);
+    ClientLevelDto clientLevel = clientService.getClientLevel(clientIdDto);
+    return ResponseEntity.ok(clientLevel);
   }
 
   @Override
   public ResponseEntity<List<OperationDto>> getLastOperations(AccountNumberDto accountNumberDto) {
-    return clientService.getAccountOperations(accountNumberDto);
+    List<OperationDto> operations = clientService
+        .getAccountOperations(accountNumberDto);
+    return ResponseEntity.ok(operations);
+
   }
 
   @Override
   public ResponseEntity<LoanPaymentDto> getLoanPayment(AccountNumberDto accountNumberDto) {
-    return clientService.getLoanPayment(accountNumberDto);
+    LoanPaymentDto loanPayment = clientService.getLoanPayment(accountNumberDto);
+    return ResponseEntity.ok(loanPayment);
   }
 
   @Override
   public ResponseEntity<ContactDto> saveContact(ContactDto contactDto) {
-    return clientService.saveContact(contactDto);
+    ContactDto savedContact = clientService.saveContact(contactDto);
+    return ResponseEntity.ok(savedContact);
   }
 }

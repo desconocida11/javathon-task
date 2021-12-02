@@ -33,9 +33,6 @@ public class ContactRepositoryImpl implements ContactRepository {
   private final EntityRepo entityRepo;
 
   // TODO is value appending/deleting thread-safe?
-  /**
-   * Map with clientId as key and list of contacts as value
-   */
   private final Map<String, List<Contact>> contacts = new ConcurrentHashMap<>();
 
   public ContactRepositoryImpl(EntityRepo entityRepo) {

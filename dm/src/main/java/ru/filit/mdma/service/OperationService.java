@@ -24,6 +24,7 @@ import ru.filit.mdma.model.entity.AccountBalance;
 import ru.filit.mdma.model.entity.Operation;
 import ru.filit.mdma.repository.AccountBalanceRepository;
 import ru.filit.mdma.repository.AccountRepository;
+import ru.filit.mdma.repository.ClientRepository;
 import ru.filit.mdma.repository.OperationRepository;
 import ru.filit.mdma.web.dto.AccountNumberDto;
 import ru.filit.mdma.web.dto.ClientIdDto;
@@ -43,17 +44,17 @@ import ru.filit.mdma.web.mapping.DtoMapper;
 @AllArgsConstructor
 public class OperationService {
 
+  private final ClientRepository clientRepository;
   private final OperationRepository operationRepository;
   private final AccountRepository accountRepository;
   private final AccountBalanceRepository accountBalanceRepository;
   private final CommonMapperImpl commonMapper;
 
-  public List<OperationDto> getAccountOperations(
-      OperationSearchDto operationSearchDto) {
+  public List<OperationDto> getAccountOperations(OperationSearchDto operationSearchDto) {
     String accountNumber = operationSearchDto.getAccountNumber();
     checkAccountNumber(accountNumber);
     final List<Operation> operations = operationRepository.getOperations(accountNumber,
-        Integer.parseInt(operationSearchDto.getQuantity()));
+        commonMapper.asInt(operationSearchDto.getQuantity()));
     return operations.stream()
         .map(DtoMapper.INSTANCE::operationToOperationDto)
         .toList();
@@ -89,7 +90,15 @@ public class OperationService {
       LocalDate loanDate = getLoanPaymentDaySkipWeekends(date.getKey(),
           account.getDeferment());
       if (negativeBalances.containsKey(loanDate)) {
-        result = result.add(getLoanAmount(negativeBalances.get(loanDate)));
+        BigDecimal loanDatePayment = negativeBalances.get(loanDate);
+        BigDecimal datePayment = date.getValue();
+        BigDecimal payment;
+        if (loanDatePayment.compareTo(datePayment) <= 0) {
+          payment = datePayment;
+        } else {
+          payment = loanDatePayment;
+        }
+        result = result.add(getLoanAmount(payment));
       }
     }
     LoanPaymentDto loanPaymentDto = new LoanPaymentDto();
@@ -102,6 +111,7 @@ public class OperationService {
     if (clientId == null || clientId.isBlank()) {
       throw new InvalidDataException("Отсутствует id клиента");
     }
+    clientRepository.getClientById(clientId);
     List<Account> accounts = accountRepository.findAccounts(clientId)
         .stream()
         .filter(account -> account.getStatus().equals(StatusEnum.ACTIVE))

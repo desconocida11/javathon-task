@@ -23,6 +23,10 @@ public class CommonMapperImpl {
     return (in == null) ? null : in.setScale(2, HALF_UP).stripTrailingZeros().toPlainString();
   }
 
+  public Integer asInt(String in) {
+    return Integer.parseInt(in);
+  }
+
   public BigDecimal asDecimalEntity(String in) {
     return (in == null) ? null : new BigDecimal(in);
   }

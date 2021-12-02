@@ -88,7 +88,7 @@ public class ClientRepositoryImpl implements ClientRepository {
   private Long getLongForStartOfTheDay(Long timestamp) {
     Instant instant = Instant.ofEpochMilli(timestamp);
     LocalDate date = LocalDate.ofInstant(instant, ZoneId.of("UTC"));
-    LocalDateTime dateTime = LocalDateTime.of(date, LocalTime.of(0,0,0,0));
+    LocalDateTime dateTime = LocalDateTime.of(date, LocalTime.of(0, 0, 0, 0));
     return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
   }
 

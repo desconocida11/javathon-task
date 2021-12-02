@@ -46,7 +46,7 @@ public class OperationRepositoryImpl implements OperationRepository {
         .filter(operation -> operation.getAccountNumber().equals(accountNumber))
         .sorted(Comparator.comparing(Operation::getOperDate).reversed());
     if (quantity > 0) {
-      sortedStream = sortedStream.limit(3);
+      sortedStream = sortedStream.limit(quantity);
     }
     return sortedStream.toList();
   }
