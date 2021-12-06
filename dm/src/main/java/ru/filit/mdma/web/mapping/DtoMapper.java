@@ -14,10 +14,12 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
+import ru.filit.mdma.model.entity.Access;
 import ru.filit.mdma.model.entity.Account;
 import ru.filit.mdma.model.entity.Client;
 import ru.filit.mdma.model.entity.Contact;
 import ru.filit.mdma.model.entity.Operation;
+import ru.filit.mdma.web.dto.AccessDto;
 import ru.filit.mdma.web.dto.AccountDto;
 import ru.filit.mdma.web.dto.ClientDto;
 import ru.filit.mdma.web.dto.ClientSearchDto;
@@ -89,6 +91,8 @@ public abstract class DtoMapper {
   @Mapping(target = "operDate",
       expression = "java(fromInstant(operation.getOperDate(), true, \"Europe/Moscow\"))")
   public abstract OperationDto operationToOperationDto(Operation operation);
+
+  public abstract AccessDto accessToAccessDto(Access access);
 
   @AfterMapping
   protected void setShortcut(Account account, @MappingTarget AccountDto accountDto) {

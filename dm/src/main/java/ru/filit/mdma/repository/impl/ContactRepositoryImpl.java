@@ -3,6 +3,7 @@ package ru.filit.mdma.repository.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.FileNotFoundException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,7 +33,6 @@ public class ContactRepositoryImpl implements ContactRepository {
 
   private final EntityRepo entityRepo;
 
-  // TODO is value appending/deleting thread-safe?
   private final Map<String, List<Contact>> contacts = new ConcurrentHashMap<>();
 
   public ContactRepositoryImpl(EntityRepo entityRepo) {
@@ -53,7 +53,7 @@ public class ContactRepositoryImpl implements ContactRepository {
 
   @Override
   public List<Contact> getContacts(String clientId) {
-    return contacts.get(clientId);
+    return contacts.get(clientId) == null ? Collections.emptyList() : contacts.get(clientId);
   }
 
   @Override

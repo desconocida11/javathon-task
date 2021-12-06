@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,7 +24,6 @@ import ru.filit.mdma.web.dto.ContactDto;
 import ru.filit.mdma.web.dto.LoanPaymentDto;
 import ru.filit.mdma.web.dto.OperationDto;
 import ru.filit.mdma.web.dto.OperationSearchDto;
-import ru.filit.mdma.web.exception.DmServiceException;
 import ru.filit.mdma.web.mapping.DtoMapper;
 
 @AllArgsConstructor
@@ -36,6 +34,8 @@ public class ClientServiceImpl implements ClientService {
   private final WebClient webClient;
 
   private final ObjectMapper objectMapper;
+
+  private final AuthenticationService authentication;
 
   @Override
   public ClientDto getClient(ClientIdDto clientIdDto) {
@@ -68,62 +68,57 @@ public class ClientServiceImpl implements ClientService {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
           "All fields are null");
     }
-    final RequestBuilder<List<ClientDto>, ClientSearchDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<List<ClientDto>>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client", clientSearchDto);
-    final ResponseEntity<List<ClientDto>> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app on client request");
-    }
-    final List<ClientDto> clients = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    RequestBuilder<List<ClientDto>, ClientSearchDto> requestBuilder = new RequestBuilder<>();
+    Mono<List<ClientDto>> entity = requestBuilder
+        .sendRequest("/client", clientSearchDto);
+    return objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return clients;
   }
 
   @Override
   public List<ContactDto> getContact(ClientIdDto clientIdDto) {
-    final RequestBuilder<List<ContactDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<List<ContactDto>>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/contact", clientIdDto);
-    final ResponseEntity<List<ContactDto>> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app on contact request");
-    }
-    final List<ContactDto> contacts = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    RequestBuilder<List<ContactDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
+    Mono<List<ContactDto>> entity = requestBuilder
+        .sendRequest("/client/contact", clientIdDto);
+    List<ContactDto> responseEntity = objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return contacts;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   @Override
   public ClientLevelDto getClientLevel(ClientIdDto clientIdDto) {
     RequestBuilder<ClientLevelDto, ClientIdDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<ClientLevelDto>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/level", clientIdDto);
-    ResponseEntity<ClientLevelDto> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app on client level request");
-    }
-    ClientLevelDto clientLevel = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    Mono<ClientLevelDto> entity = requestBuilder
+        .sendRequest("/client/level", clientIdDto);
+    ClientLevelDto responseEntity = objectMapper.convertValue(entity.block(),
+        new TypeReference<>() {
         });
-    return clientLevel;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   @Override
   public List<AccountDto> getAccount(ClientIdDto clientIdDto) {
-    final RequestBuilder<List<AccountDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<List<AccountDto>>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/account", clientIdDto);
-    final ResponseEntity<List<AccountDto>> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app on account request");
-    }
-    final List<AccountDto> accounts = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    RequestBuilder<List<AccountDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
+    Mono<List<AccountDto>> entity = requestBuilder
+        .sendRequest("/client/account", clientIdDto);
+    List<AccountDto> responseEntity = objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return accounts;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   @Override
@@ -131,73 +126,51 @@ public class ClientServiceImpl implements ClientService {
       AccountNumberDto accountNumberDto) {
     OperationSearchDto operationSearchDto = DtoMapper.INSTANCE
         .accountNumberToOperationSearch(accountNumberDto);
-    final RequestBuilder<List<OperationDto>, OperationSearchDto> requestBuilder =
+    RequestBuilder<List<OperationDto>, OperationSearchDto> requestBuilder =
         new RequestBuilder<>();
-    Mono<ResponseEntity<List<OperationDto>>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/account/operation", operationSearchDto);
-    final ResponseEntity<List<OperationDto>> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app");
-    }
-    final List<OperationDto> operations = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    Mono<List<OperationDto>> entity = requestBuilder
+        .sendRequest("/client/account/operation", operationSearchDto);
+    List<OperationDto> responseEntity = objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return operations;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   @Override
   public ContactDto saveContact(ContactDto contactDto) {
-    final RequestBuilder<ContactDto, ContactDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<ContactDto>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/contact/save", contactDto);
-    ResponseEntity<ContactDto> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app");
-    }
-    ContactDto contact = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    RequestBuilder<ContactDto, ContactDto> requestBuilder = new RequestBuilder<>();
+    Mono<ContactDto> entity = requestBuilder
+        .sendRequest("/client/contact/save", contactDto);
+    ContactDto responseEntity = objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return contact;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   @Override
   public LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto) {
-    final RequestBuilder<LoanPaymentDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
-    Mono<ResponseEntity<LoanPaymentDto>> entity = requestBuilder
-        .sendRequestWithResponseEntity("/client/account/loan-payment", accountNumberDto);
-    ResponseEntity<LoanPaymentDto> responseEntity = entity.block();
-    if (responseEntity == null || responseEntity.getStatusCode() != HttpStatus.OK) {
-      throw new DmServiceException("Exception occurred in DM app");
-    }
-    LoanPaymentDto loanPaymentDto = objectMapper
-        .convertValue(responseEntity.getBody(), new TypeReference<>() {
+    RequestBuilder<LoanPaymentDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
+    Mono<LoanPaymentDto> entity = requestBuilder
+        .sendRequest("/client/account/loan-payment", accountNumberDto);
+    LoanPaymentDto responseEntity = objectMapper
+        .convertValue(entity.block(), new TypeReference<>() {
         });
-    return loanPaymentDto;
+    if (responseEntity == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Null value");
+    }
+    return responseEntity;
   }
 
   private class RequestBuilder<T, B> {
-
-    private Mono<ResponseEntity<T>> sendRequestWithResponseEntity(String uri, B body) {
-      log.info("The request sent to {} with body: {}", uri, body.toString());
-      return webClient
-          .post()
-          .uri(uri)
-          .contentType(MediaType.APPLICATION_JSON)
-          .bodyValue(body)
-          .retrieve()
-          .onStatus(HttpStatus::isError, response -> {
-            log.error("response from DM app {}", response.statusCode());
-            return Mono.error(new DmServiceException(
-                "Exception " + response.statusCode() + " occurred on DM side"));
-          })
-          .toEntity(new ParameterizedTypeReference<>() {
-          });
-    }
-
-    private T blockAndGetDto(Mono<T> entity) {
-      return objectMapper.convertValue(entity.block(), new TypeReference<>() {
-      });
-    }
 
     private Mono<T> sendRequest(String uri, B body) {
       log.info("The request sent to {} with body: {}", uri, body.toString());
@@ -205,16 +178,19 @@ public class ClientServiceImpl implements ClientService {
           .post()
           .uri(uri)
           .contentType(MediaType.APPLICATION_JSON)
+          .header("CRM-User-Role", authentication.getAuthRole())
+          .header("CRM-User-Name", authentication.getAuthName())
           .bodyValue(body)
           .exchangeToMono(response -> {
             if (response.statusCode().equals(HttpStatus.OK)) {
-              return response.bodyToMono(new ParameterizedTypeReference<T>() {
+              return response.bodyToMono(new ParameterizedTypeReference<>() {
               });
             } else {
               return response.createException().flatMap(error -> {
                 log.info("Text {}, status {}",
                     error.getResponseBodyAsString(), error.getStatusCode());
-                return Mono.error(new DmServiceException(error.getResponseBodyAsString()));
+                return Mono.error(
+                    new ResponseStatusException(error.getStatusCode(), "Exception occurred on Intranet side"));
               });
             }
           });
