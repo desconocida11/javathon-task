@@ -1,6 +1,7 @@
 package ru.filit.mdma.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import ru.filit.mdma.model.entity.Account;
 import ru.filit.mdma.repository.AccountRepository;
@@ -29,7 +30,7 @@ public class AccountService {
     List<Account> accounts = accountRepository.findAccounts(id);
     return accounts.stream()
         .map(DtoMapper.INSTANCE::accountToAccountDto)
-        .toList();
+        .collect(Collectors.toList());
   }
 
 }

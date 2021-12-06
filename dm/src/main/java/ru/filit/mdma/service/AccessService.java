@@ -1,6 +1,7 @@
 package ru.filit.mdma.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,6 @@ public class AccessService {
         .getAccessForRole(body.getRole(), body.getVersion());
     return accessForRole.stream()
         .map(DtoMapper.INSTANCE::accessToAccessDto)
-        .toList();
+        .collect(Collectors.toList());
   }
-
 }

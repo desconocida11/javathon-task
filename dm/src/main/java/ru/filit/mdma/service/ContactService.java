@@ -1,6 +1,7 @@
 package ru.filit.mdma.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import ru.filit.mdma.model.entity.Contact;
 import ru.filit.mdma.repository.ContactRepository;
@@ -29,7 +30,7 @@ public class ContactService {
     final List<Contact> contacts = contactRepository.getContacts(id);
     return contacts.stream()
         .map(DtoMapper.INSTANCE::contactToContactDto)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public ContactDto saveContact(ContactDto contactDto) {

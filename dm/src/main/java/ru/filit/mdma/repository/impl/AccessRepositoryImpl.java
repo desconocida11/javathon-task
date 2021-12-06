@@ -3,6 +3,7 @@ package ru.filit.mdma.repository.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Access;
@@ -33,12 +34,14 @@ public class AccessRepositoryImpl implements AccessRepository {
   @Override
   public List<Access> getAccessForRole(String role, String version) {
     List<Access> accesses =
-        entityRepo.readList(getFilePath(version), new TypeReference<List<Access>>() {
+        entityRepo.readList(getFilePath(version), new TypeReference<>() {
         });
     if (accesses == null) {
       accesses = Collections.emptyList();
     }
-    return accesses.stream().filter(access -> access.getRole().equals(role)).toList();
+    return accesses.stream()
+        .filter(access -> access.getRole().equals(role))
+        .collect(Collectors.toList());
   }
 
   private String getFilePath(String version) {

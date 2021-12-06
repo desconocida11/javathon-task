@@ -3,6 +3,7 @@ package ru.filit.mdma.repository.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -33,7 +34,7 @@ public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
   @PostConstruct
   public void init() {
     final List<AccountBalance> accountBalancesList =
-        entityRepo.readList(getFile(), new TypeReference<List<AccountBalance>>() {
+        entityRepo.readList(getFile(), new TypeReference<>() {
         });
     accountBalances.addAll(accountBalancesList);
   }
@@ -42,7 +43,7 @@ public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
   public List<AccountBalance> getAccountBalance(String accountNumber) {
     return accountBalances.stream()
         .filter(accountBalance -> accountBalance.getAccountNumber().equals(accountNumber))
-        .toList();
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -51,7 +52,7 @@ public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
         .filter(accountBalance -> accountBalance.getAccountNumber().equals(accountNumber)
             && accountBalance.getBalanceDate().compareTo(from) >= 0
             && accountBalance.getBalanceDate().compareTo(to) <= 0)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private String getFile() {

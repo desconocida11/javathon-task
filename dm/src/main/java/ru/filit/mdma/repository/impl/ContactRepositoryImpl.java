@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class ContactRepositoryImpl implements ContactRepository {
   @PostConstruct
   public void init() {
     final List<Contact> contactList =
-        entityRepo.readList(getFile(), new TypeReference<List<Contact>>() {
+        entityRepo.readList(getFile(), new TypeReference<>() {
         });
 
     for (Contact contact : contactList) {
@@ -78,7 +79,7 @@ public class ContactRepositoryImpl implements ContactRepository {
     entityRepo.writeList(getFile(), contacts.values()
         .stream()
         .flatMap(Collection::stream)
-        .toList());
+        .collect(Collectors.toList()));
     return contact;
   }
 

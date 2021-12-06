@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +36,7 @@ public class OperationRepositoryImpl implements OperationRepository {
   @PostConstruct
   public void init() {
     final List<Operation> operationList =
-        entityRepo.readList(getFile(), new TypeReference<List<Operation>>() {
+        entityRepo.readList(getFile(), new TypeReference<>() {
         });
     operations.addAll(operationList);
   }
@@ -48,7 +49,7 @@ public class OperationRepositoryImpl implements OperationRepository {
     if (quantity > 0) {
       sortedStream = sortedStream.limit(quantity);
     }
-    return sortedStream.toList();
+    return sortedStream.collect(Collectors.toList());
   }
 
   @Override
@@ -60,7 +61,7 @@ public class OperationRepositoryImpl implements OperationRepository {
               && operDate.compareTo(fromDate) > 0 && operDate.compareTo(toDate) < 0;
         })
         .sorted(Comparator.comparing(Operation::getOperDate).reversed())
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private String getFile() {

@@ -57,7 +57,7 @@ public class OperationService {
         commonMapper.asInt(operationSearchDto.getQuantity()));
     return operations.stream()
         .map(DtoMapper.INSTANCE::operationToOperationDto)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto) {
@@ -132,7 +132,7 @@ public class OperationService {
     Entry<String, BigDecimal> entry = max.get();
     ClientLevel clientLevel = ClientLevel.fromAvgDailyBalance(entry.getValue());
     ClientLevelDto clientLevelDto = new ClientLevelDto();
-    clientLevelDto.setAccuntNumber(entry.getKey());
+    clientLevelDto.setAccountNumber(entry.getKey());
     clientLevelDto.setLevel(clientLevel.getValue());
     clientLevelDto.setAvgBalance(commonMapper.asDto(entry.getValue()));
     return clientLevelDto;
@@ -165,9 +165,14 @@ public class OperationService {
     BigDecimal amount = getAccountBalanceBeginOfMonth(date, accountNumber);
     for (Operation operation : operations) {
       switch (operation.getType()) {
-        case EXPENSE -> amount = amount.subtract(operation.getAmount());
-        case RECEIPT -> amount = amount.add(operation.getAmount());
-        default -> throw new IllegalStateException("Unexpected value: " + operation.getType());
+        case EXPENSE:
+          amount = amount.subtract(operation.getAmount());
+          break;
+        case RECEIPT:
+          amount = amount.add(operation.getAmount());
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + operation.getType());
       }
     }
     return amount;

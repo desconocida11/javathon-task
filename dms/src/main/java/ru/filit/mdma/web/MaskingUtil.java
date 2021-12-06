@@ -24,14 +24,11 @@ public final class MaskingUtil {
   public static <T extends Serializable> void maskFields(@NotNull T target,
       List<AccessDto> access, @NotNull String entity) {
 
-    Class<?> targetClass = target.getClass();
+    Class<? extends Serializable> targetClass = target.getClass();
 
     Set<String> fieldsToMask = getFieldsToMask(access, entity, targetClass);
 
-    PropertyAccessor myAccessor = PropertyAccessorFactory.forBeanPropertyAccess(target);
-    for (String field : fieldsToMask) {
-      myAccessor.setPropertyValue(field, maskingPattern);
-    }
+    maskFields(fieldsToMask, target);
   }
 
   public static <T extends Serializable> void maskFields(@NotNull List<T> target,
@@ -39,32 +36,39 @@ public final class MaskingUtil {
     if (target.isEmpty()) {
       return;
     }
-    Class<?> targetClass = target.get(0).getClass();
+    Class<? extends Serializable> targetClass = target.get(0).getClass();
 
     Set<String> fieldsToMask = getFieldsToMask(access, entity, targetClass);
 
-    target.forEach(t -> {
-      PropertyAccessor myAccessor = PropertyAccessorFactory.forBeanPropertyAccess(t);
-      for (String field : fieldsToMask) {
-        myAccessor.setPropertyValue(field, maskingPattern);
-      }
-    });
+    target.forEach(t -> maskFields(fieldsToMask, t));
   }
 
-  private static Set<String> getFieldsToMask(List<AccessDto> access, @NotNull String entity,
-      Class<?> targetClass) {
+  public static Set<String> getFieldsToMask(List<AccessDto> access, @NotNull String entity,
+      Class<? extends Serializable> targetClass) {
     Set<String> visibleFields = access.stream()
         .filter(accessDto -> entity.equals(accessDto.getEntity()))
         .map(AccessDto::getProperty)
         .collect(Collectors.toSet());
 
-    Set<String> fieldsToHide = Arrays.stream(targetClass.getDeclaredFields())
+    Set<String> fieldsToHide = Arrays.stream(getProperties(targetClass))
+    .map(Field::getName).collect(Collectors.toSet());
+    fieldsToHide.removeAll(visibleFields);
+    return fieldsToHide;
+  }
+
+  public Field[] getProperties(Class<? extends Serializable> targetClass) {
+    return Arrays.stream(targetClass.getDeclaredFields())
         .filter(field -> {
           int mod = field.getModifiers();
           return !Modifier.isFinal(mod) && !Modifier.isStatic(mod);
         })
-        .map(Field::getName).collect(Collectors.toSet());
-    fieldsToHide.removeAll(visibleFields);
-    return fieldsToHide;
+        .toArray(Field[]::new);
+  }
+
+  private static <T extends Serializable> void maskFields(Set<String> fieldsToMask, T t) {
+    PropertyAccessor myAccessor = PropertyAccessorFactory.forBeanPropertyAccess(t);
+    for (String field : fieldsToMask) {
+      myAccessor.setPropertyValue(field, maskingPattern);
+    }
   }
 }

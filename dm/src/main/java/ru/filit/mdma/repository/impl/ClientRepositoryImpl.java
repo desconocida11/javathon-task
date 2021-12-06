@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -42,7 +43,7 @@ public class ClientRepositoryImpl implements ClientRepository {
   @PostConstruct
   public void init() {
     final List<Client> clientList =
-        entityRepo.readList(getFile(), new TypeReference<List<Client>>() {
+        entityRepo.readList(getFile(), new TypeReference<>() {
         });
     clientList.forEach(client -> clients.putIfAbsent(client.getId(), client));
   }
@@ -82,7 +83,7 @@ public class ClientRepositoryImpl implements ClientRepository {
               .and(patronymicPredicate.and(birthdatePredicate.and(innPredicate
                   .and(passportnumberPredicate.and(passportseriesPredicate)))))));
           return result.test(client);
-        }).toList();
+        }).collect(Collectors.toList());
   }
 
   private Long getLongForStartOfTheDay(Long timestamp) {

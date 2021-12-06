@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
-import ru.filit.mdma.web.MaskingUtil;
+import ru.filit.mdma.model.cache.TokenService;
 import ru.filit.mdma.web.dto.AccessDto;
 import ru.filit.mdma.web.dto.AccessRequestDto;
 import ru.filit.mdma.web.dto.AccountDto;
@@ -39,6 +39,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
 
   private final ObjectMapper objectMapper;
 
+  private final TokenService tokenService;
+
   @Override
   public List<AccessDto> getAccess(AccessRequestDto accessRequestDto) {
     if (accessRequestDto.getRole() == null) {
@@ -59,6 +61,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
 
   @Override
   public List<AccountDto> getAccount(ClientIdDto clientIdDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<List<AccountDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<List<AccountDto>> entity = requestBuilder
         .sendRequest("/client/account", clientIdDto);
@@ -68,13 +71,14 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null account");
     }
-    MaskingUtil.maskFields(accountDtos, access, "account");
+    tokenService.tokenizeObject(accountDtos, access, "account");
     return accountDtos;
   }
 
   @Override
   public CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto,
       List<AccessDto> access) {
+    tokenService.detokenizeObject(accountNumberDto);
     RequestBuilder<CurrentBalanceDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
     Mono<CurrentBalanceDto> entity = requestBuilder
         .sendRequest("/client/account/balance", accountNumberDto);
@@ -85,13 +89,14 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null current balance");
     }
-    MaskingUtil.maskFields(currentBalance, access, "currentBalance");
+    tokenService.tokenizeObject(currentBalance, access, "currentBalance");
     return currentBalance;
   }
 
   @Override
   public List<OperationDto> getAccountOperations(OperationSearchDto operationSearchDto,
       List<AccessDto> access) {
+    tokenService.detokenizeObject(operationSearchDto);
     RequestBuilder<List<OperationDto>, OperationSearchDto> requestBuilder = new RequestBuilder<>();
     Mono<List<OperationDto>> entity = requestBuilder
         .sendRequest("/client/account/operation", operationSearchDto);
@@ -102,12 +107,13 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null operation");
     }
-    MaskingUtil.maskFields(operations, access, "operation");
+    tokenService.tokenizeObject(operations, access, "operation");
     return operations;
   }
 
   @Override
   public List<ClientDto> findClient(ClientSearchDto clientSearchDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(clientSearchDto);
     RequestBuilder<List<ClientDto>, ClientSearchDto> requestBuilder = new RequestBuilder<>();
     Mono<List<ClientDto>> entity = requestBuilder
         .sendRequest("/client", clientSearchDto);
@@ -118,12 +124,13 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null client");
     }
-    MaskingUtil.maskFields(clientDtos, access, "client");
+    tokenService.tokenizeObject(clientDtos, access, "client");
     return clientDtos;
   }
 
   @Override
   public ClientLevelDto getClientLevel(ClientIdDto clientIdDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<ClientLevelDto, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<ClientLevelDto> entity = requestBuilder
         .sendRequest("/client/level", clientIdDto);
@@ -134,12 +141,13 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null client level");
     }
-    MaskingUtil.maskFields(clientLevelDto, access, "clientLevel");
+    tokenService.tokenizeObject(clientLevelDto, access, "clientLevel");
     return clientLevelDto;
   }
 
   @Override
   public List<ContactDto> getContact(ClientIdDto clientIdDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<List<ContactDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<List<ContactDto>> entity = requestBuilder
         .sendRequest("/client/contact", clientIdDto);
@@ -150,12 +158,13 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null contact");
     }
-    MaskingUtil.maskFields(contacts, access, "contact");
+    tokenService.tokenizeObject(contacts, access, "contact");
     return contacts;
   }
 
   @Override
   public ContactDto saveContact(ContactDto contactDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(contactDto);
     RequestBuilder<ContactDto, ContactDto> requestBuilder = new RequestBuilder<>();
     Mono<ContactDto> entity = requestBuilder
         .sendRequest("/client/contact/save", contactDto);
@@ -166,12 +175,13 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null contact");
     }
-    MaskingUtil.maskFields(contact, access, "contact");
+    tokenService.tokenizeObject(contact, access, "contact");
     return contact;
   }
 
   @Override
   public LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto, List<AccessDto> access) {
+    tokenService.detokenizeObject(accountNumberDto);
     RequestBuilder<LoanPaymentDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
     Mono<LoanPaymentDto> entity = requestBuilder
         .sendRequest("/client/account/loan-payment", accountNumberDto);
@@ -182,7 +192,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND, "Null loan payment");
     }
-    MaskingUtil.maskFields(loanPayment, access, "loanPayment");
+    tokenService.tokenizeObject(loanPayment, access, "loanPayment");
     return loanPayment;
   }
 

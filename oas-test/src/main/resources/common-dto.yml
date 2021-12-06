@@ -165,12 +165,12 @@ components:
       description: Уровни клиентов
       required:
         - level
-        - accuntNumber
+        - accountNumber
         - avgBalance
       properties:
         level:
           type: string
-        accuntNumber:
+        accountNumber:
           type: string
         avgBalance:
           type: string

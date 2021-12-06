@@ -110,18 +110,19 @@ public abstract class DtoMapper {
       return;
     }
     switch (contact.getType()) {
-      case EMAIL -> {
+      case EMAIL:
         if (EmailValidator.getInstance().isValid(value)) {
           int fromIndex = value.lastIndexOf("@") - 1;
           contactDto.setShortcut(value.substring(fromIndex));
         }
-      }
-      case PHONE -> {
+        break;
+      case PHONE:
         if (value.length() > 4) {
           contactDto.setShortcut(value.substring(value.length() - 4));
         }
-      }
-      default -> throw new IllegalStateException("Unexpected value: " + contact.getType());
+        break;
+      default:
+        throw new IllegalStateException("Unexpected value: " + contact.getType());
     }
   }
 
