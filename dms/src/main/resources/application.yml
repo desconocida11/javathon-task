@@ -38,3 +38,7 @@ ignite:
     dataRegionConfigurations:
       - name: dataregion
         initialSize: 104857600 #100MB
+
+audit:
+  kafka:
+    topic-name: "dm-audit"
