@@ -13,12 +13,16 @@ import ru.filit.mdma.web.dto.ContactDto;
  */
 public interface ClientService {
 
-  List<ClientDto> findClient(ClientSearchDto clientSearchDto, List<AccessDto> access);
+  List<ClientDto> findClient(ClientSearchDto clientSearchDto, List<AccessDto> access,
+      String crMUserName, List<AccessDto> accessAudit);
 
-  ClientLevelDto getClientLevel(ClientIdDto clientIdDto, List<AccessDto> access);
+  ClientLevelDto getClientLevel(ClientIdDto clientIdDto, List<AccessDto> access,
+      String crMUserName, List<AccessDto> accessAudit);
 
-  List<ContactDto> getContact(ClientIdDto clientIdDto, List<AccessDto> access);
+  List<ContactDto> getContact(ClientIdDto clientIdDto, List<AccessDto> access,
+      String crMUserName, List<AccessDto> accessAudit);
 
-  ContactDto saveContact(ContactDto contactDto, List<AccessDto> access);
+  ContactDto saveContact(ContactDto contactDto, List<AccessDto> access,
+      String crMUserName, List<AccessDto> accessAudit);
 
 }

@@ -1,18 +1,18 @@
 package ru.filit.mdma.model.cache;
 
-import static ru.filit.mdma.web.MaskingUtil.getFieldsToMask;
-
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
-import ru.filit.mdma.web.MaskingUtil;
 import ru.filit.mdma.web.TokenUtil;
 import ru.filit.mdma.web.dto.AccessDto;
 
@@ -31,7 +31,7 @@ public class TokenService {
   public <T extends Serializable> void detokenizeObject(T target) {
     Class<? extends Serializable> targetClass = target.getClass();
     PropertyAccessor myAccessor = PropertyAccessorFactory.forBeanPropertyAccess(target);
-    for (Field field : MaskingUtil.getProperties(targetClass)) {
+    for (Field field : getProperties(targetClass)) {
       Object value = myAccessor.getPropertyValue(field.getName());
       if (value instanceof String) {
         if (TokenUtil.isTokenized((String) value)) {
@@ -46,7 +46,7 @@ public class TokenService {
       List<AccessDto> access, String entity) {
     Class<? extends Serializable> targetClass = target.getClass();
     final Set<String> fieldsToTokenize = getFieldsToMask(access, entity, targetClass);
-    tokenizeFields(fieldsToTokenize, target);
+    tokenizeFields(getProperties(targetClass), fieldsToTokenize, target);
   }
 
   public <T extends Serializable> void tokenizeObject(@NotNull List<T> target,
@@ -56,22 +56,58 @@ public class TokenService {
     }
     Class<? extends Serializable> targetClass = target.get(0).getClass();
     final Set<String> fieldsToTokenize = getFieldsToMask(access, entity, targetClass);
-    target.forEach(t -> tokenizeFields(fieldsToTokenize, t));
+    target.forEach(t ->
+        tokenizeFields(getProperties(targetClass), fieldsToTokenize, t));
   }
 
-  private <T extends Serializable> void tokenizeFields(Set<String> fieldsToMask, T t) {
+  private <T extends Serializable> void tokenizeFields(Field[] allFields,
+      Set<String> fieldsToMask, T t) {
     PropertyAccessor myAccessor = PropertyAccessorFactory.forBeanPropertyAccess(t);
-    for (String field : fieldsToMask) {
+
+    for (Field property : allFields) {
+      String field = property.getName();
       final Object propertyValue = myAccessor.getPropertyValue(field);
       if (propertyValue instanceof String) {
-        final String token = TokenUtil.buildToken();
-        if (dataCache.put(token, (String) propertyValue)) {
-          myAccessor.setPropertyValue(field, token);
+        String fieldValue;
+        if (TokenUtil.isTokenized((String) propertyValue)) {
+          fieldValue = dataCache.read((String) propertyValue);
         } else {
-          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-              "Failed to put tokenized data in cache");
+          fieldValue = (String) propertyValue;
+        }
+        if (fieldsToMask.contains(field)) {
+          final String token = TokenUtil.buildToken();
+          if (dataCache.put(token, fieldValue)) {
+            myAccessor.setPropertyValue(field, token);
+          } else {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Failed to put tokenized data in cache");
+          }
+        } else {
+          myAccessor.setPropertyValue(field, fieldValue);
         }
       }
     }
+  }
+
+  private Set<String> getFieldsToMask(List<AccessDto> access, @NotNull String entity,
+      Class<? extends Serializable> targetClass) {
+    Set<String> visibleFields = access.stream()
+        .filter(accessDto -> entity.equals(accessDto.getEntity()))
+        .map(AccessDto::getProperty)
+        .collect(Collectors.toSet());
+
+    Set<String> fieldsToHide = Arrays.stream(getProperties(targetClass))
+        .map(Field::getName).collect(Collectors.toSet());
+    fieldsToHide.removeAll(visibleFields);
+    return fieldsToHide;
+  }
+
+  private Field[] getProperties(Class<? extends Serializable> targetClass) {
+    return Arrays.stream(targetClass.getDeclaredFields())
+        .filter(field -> {
+          int mod = field.getModifiers();
+          return !Modifier.isFinal(mod) && !Modifier.isStatic(mod);
+        })
+        .toArray(Field[]::new);
   }
 }

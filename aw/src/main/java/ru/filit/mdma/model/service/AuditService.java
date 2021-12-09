@@ -32,7 +32,7 @@ public class AuditService {
         PrintWriter out = new PrintWriter(bw)) {
       Instant instant = Instant.ofEpochMilli(Long.parseLong(message.getTimestamp()));
       LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-      out.println(String.format("%-19s %-8s %-15s %-1s%-24s %s",
+      out.println(String.format("%-19s %-8s %-15s %-1s%-29s %s",
           dateTime.format(DATE_TIME_FORMATTER), message.getId(), message.getUserName(),
           message.getRequest(), message.getMethodName(), message.getBody()));
     } catch (IOException e) {

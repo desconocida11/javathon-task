@@ -15,12 +15,15 @@ import ru.filit.mdma.web.dto.OperationSearchDto;
  */
 public interface AccountService {
 
-  List<AccountDto> getAccount(ClientIdDto clientIdDto, List<AccessDto> access);
+  List<AccountDto> getAccount(ClientIdDto clientIdDto,
+      List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit);
 
-  CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto, List<AccessDto> access);
+  CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto,
+      List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit);
 
   List<OperationDto> getAccountOperations(OperationSearchDto operationSearchDto,
-      List<AccessDto> access);
+      List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit);
 
-  LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto, List<AccessDto> access);
+  LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto,
+      List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit);
 }
