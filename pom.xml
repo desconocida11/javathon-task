@@ -140,19 +140,25 @@
 
   <build>
     <plugins>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-war-plugin</artifactId>-->
+<!--        <version>${war.plugin.version}</version>-->
+<!--        <configuration>-->
+<!--          <archive>-->
+<!--            &lt;!&ndash; will put the entries into META-INF/MANIFEST.MF file &ndash;&gt;-->
+<!--            <manifestEntries>-->
+<!--              <Implementation-Version>${project.version}</Implementation-Version>-->
+<!--              &lt;!&ndash;<Implementation-Build>${buildNumber}</Implementation-Build>&ndash;&gt;-->
+<!--              <Build-Date>${maven.build.timestamp}</Build-Date>-->
+<!--            </manifestEntries>-->
+<!--          </archive>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>${war.plugin.version}</version>
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <archive>
-            <!-- will put the entries into META-INF/MANIFEST.MF file -->
-            <manifestEntries>
-              <Implementation-Version>${project.version}</Implementation-Version>
-              <!--<Implementation-Build>${buildNumber}</Implementation-Build>-->
-              <Build-Date>${maven.build.timestamp}</Build-Date>
-            </manifestEntries>
-          </archive>
+          <skipTests>true</skipTests>
         </configuration>
       </plugin>
       <plugin>
