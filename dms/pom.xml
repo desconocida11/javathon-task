@@ -6,7 +6,7 @@
 
     <artifactId>dms</artifactId>
     <version>1.0</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
     <name>Data Masking System</name>
 

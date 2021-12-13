@@ -7,6 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Operation;
@@ -17,7 +18,8 @@ import ru.filit.mdma.service.EntityRepo;
  * @author A.Khalitova 29-Nov-2021
  */
 @Repository
-public class OperationRepositoryImpl implements OperationRepository {
+@Slf4j
+public class OperationRepositoryImpl extends AbstractYmlRepository implements OperationRepository {
 
   @Value(value = "operations.yml")
   private String fileName;
@@ -36,7 +38,7 @@ public class OperationRepositoryImpl implements OperationRepository {
   @PostConstruct
   public void init() {
     final List<Operation> operationList =
-        entityRepo.readList(getFile(), new TypeReference<>() {
+        entityRepo.readList(getFile(filePath, fileName), new TypeReference<>() {
         });
     operations.addAll(operationList);
   }
@@ -62,9 +64,5 @@ public class OperationRepositoryImpl implements OperationRepository {
         })
         .sorted(Comparator.comparing(Operation::getOperDate).reversed())
         .collect(Collectors.toList());
-  }
-
-  private String getFile() {
-    return filePath + fileName;
   }
 }

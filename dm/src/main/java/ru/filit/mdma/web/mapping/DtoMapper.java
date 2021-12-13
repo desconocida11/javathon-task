@@ -42,7 +42,7 @@ public abstract class DtoMapper {
       return null;
     }
     // "Europe/Moscow" or "UTC"
-    Instant instant = Instant.ofEpochMilli(timestamp);
+    Instant instant = Instant.ofEpochSecond(timestamp);
     if (withTime) {
       LocalDateTime date = LocalDateTime.ofInstant(instant, ZoneId.of(zoneId));
       return date.format(DATE_TIME_FORMATTER);
@@ -59,16 +59,12 @@ public abstract class DtoMapper {
     LocalDate localDate = LocalDate.parse(date, DATE_FORMATTER);
     LocalDateTime localDateTime = LocalDateTime.of(localDate,
         LocalTime.of(0, 0, 0, 0));
-    return localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+    return localDateTime.toEpochSecond(ZoneOffset.UTC);
   }
 
   @Mapping(target = "birthDate",
       expression = "java(fromInstant(client.getBirthDate(), false, \"UTC\"))")
   public abstract ClientDto clientToClientDto(Client client);
-
-  @Mapping(target = "birthDate",
-      expression = "java(toInstant(clientDto.getBirthDate()))")
-  public abstract Client clientDtoToClient(ClientDto clientDto);
 
   @Mappings(value = {
       @Mapping(target = "birthDate",

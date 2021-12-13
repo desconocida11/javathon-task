@@ -6,11 +6,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
@@ -24,7 +27,8 @@ import ru.filit.mdma.web.exception.ClientNotFoundException;
  * @author A.Khalitova 27-Nov-2021
  */
 @Repository
-public class ContactRepositoryImpl implements ContactRepository {
+@Slf4j
+public class ContactRepositoryImpl extends AbstractYmlRepository implements ContactRepository {
 
   @Value(value = "contacts.yml")
   private String fileName;
@@ -43,7 +47,7 @@ public class ContactRepositoryImpl implements ContactRepository {
   @PostConstruct
   public void init() {
     final List<Contact> contactList =
-        entityRepo.readList(getFile(), new TypeReference<>() {
+        entityRepo.readList(getFile(filePath, fileName), new TypeReference<>() {
         });
 
     for (Contact contact : contactList) {
@@ -71,12 +75,12 @@ public class ContactRepositoryImpl implements ContactRepository {
     }
     contactsByClientId.add(contact);
     try {
-      entityRepo.clearContents(getFile());
+      entityRepo.clearContents(getFile(filePath, fileName));
     } catch (FileNotFoundException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
           "Error occurred while saving the contact");
     }
-    entityRepo.writeList(getFile(), contacts.values()
+    entityRepo.writeList(getFile(filePath, fileName), contacts.values()
         .stream()
         .flatMap(Collection::stream)
         .collect(Collectors.toList()));
@@ -84,10 +88,13 @@ public class ContactRepositoryImpl implements ContactRepository {
   }
 
   private String getGeneratedId() {
-    return UUID.randomUUID().toString();
-  }
-
-  private String getFile() {
-    return filePath + fileName;
+    final int min = 10_000;
+    final int max = 99_999;
+    Random random = new Random();
+    OptionalInt optionalInt = random.ints(min, (max + 1)).findFirst();
+    if (optionalInt.isPresent()) {
+      return String.valueOf(optionalInt.getAsInt());
+    }
+    return UUID.randomUUID().toString().replace("-", "").substring(0, 5);
   }
 }

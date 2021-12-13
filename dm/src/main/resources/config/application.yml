@@ -26,4 +26,4 @@ server:
 
 dm:
   repo:
-    location: resources/db/
+    location: datafiles

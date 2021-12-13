@@ -3,7 +3,6 @@ package ru.filit.mdma.service;
 import static java.math.RoundingMode.HALF_UP;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -26,6 +25,7 @@ import ru.filit.mdma.repository.AccountBalanceRepository;
 import ru.filit.mdma.repository.AccountRepository;
 import ru.filit.mdma.repository.ClientRepository;
 import ru.filit.mdma.repository.OperationRepository;
+import ru.filit.mdma.web.DateTimeUtil;
 import ru.filit.mdma.web.dto.AccountNumberDto;
 import ru.filit.mdma.web.dto.ClientIdDto;
 import ru.filit.mdma.web.dto.ClientLevelDto;
@@ -51,8 +51,7 @@ public class OperationService {
   private final CommonMapperImpl commonMapper;
 
   public List<OperationDto> getAccountOperations(OperationSearchDto operationSearchDto) {
-    String accountNumber = operationSearchDto.getAccountNumber();
-    checkAccountNumber(accountNumber);
+    String accountNumber = checkAccountNumber(operationSearchDto);
     final List<Operation> operations = operationRepository.getOperations(accountNumber,
         commonMapper.asInt(operationSearchDto.getQuantity()));
     return operations.stream()
@@ -61,8 +60,7 @@ public class OperationService {
   }
 
   public CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto) {
-    String accountNumber = accountNumberDto.getAccountNumber();
-    checkAccountNumber(accountNumber);
+    String accountNumber = checkAccountNumber(accountNumberDto);
     BigDecimal balancePerDay = getBalancePerDay(LocalDate.now(), accountNumber);
     CurrentBalanceDto currentBalanceDto = new CurrentBalanceDto();
     currentBalanceDto.setBalanceAmount(commonMapper.asDto(balancePerDay));
@@ -70,8 +68,7 @@ public class OperationService {
   }
 
   public LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto) {
-    String accountNumber = accountNumberDto.getAccountNumber();
-    checkAccountNumber(accountNumber);
+    String accountNumber = checkAccountNumber(accountNumberDto);
     Account account = accountRepository.getAccount(accountNumber);
     if (!account.getType().equals(TypeEnum.OVERDRAFT)) {
       throw new InvalidDataException("Provided account number is not overdraft");
@@ -87,7 +84,7 @@ public class OperationService {
     }
     BigDecimal result = BigDecimal.valueOf(0);
     for (Map.Entry<LocalDate, BigDecimal> date : negativeBalances.entrySet()) {
-      LocalDate loanDate = getLoanPaymentDaySkipWeekends(date.getKey(),
+      LocalDate loanDate = DateTimeUtil.getLoanPaymentDaySkipWeekends(date.getKey(),
           account.getDeferment());
       if (negativeBalances.containsKey(loanDate)) {
         BigDecimal loanDatePayment = negativeBalances.get(loanDate);
@@ -119,7 +116,7 @@ public class OperationService {
     Map<String, BigDecimal> avgPerAccount = new HashMap<>();
     accounts.forEach(account -> {
       String accountNumber = account.getNumber();
-      BigDecimal avg = getAvgDailyBalance(accountNumber);
+      BigDecimal avg = getAvgDailyBalance(account);
       avgPerAccount.put(accountNumber, avg);
     });
     Optional<Entry<String, BigDecimal>> max = avgPerAccount.entrySet()
@@ -143,25 +140,11 @@ public class OperationService {
     return input.abs().multiply(deferment);
   }
 
-  private LocalDate getLoanPaymentDaySkipWeekends(LocalDate date, int deferment) {
-    LocalDate result = date;
-    int addedDays = 0;
-    while (addedDays < deferment) {
-      result = result.plusDays(1);
-      if (!(result.getDayOfWeek() == DayOfWeek.SATURDAY
-          || result.getDayOfWeek() == DayOfWeek.SUNDAY)) {
-        addedDays += 1;
-      }
-    }
-    return result;
-  }
-
   private BigDecimal getBalancePerDay(LocalDate date, String accountNumber) {
     LocalDateTime from = LocalDateTime.of(date.withDayOfMonth(1), LocalTime.MIN);
     LocalDateTime to = LocalDateTime.of(date, LocalTime.MAX);
     List<Operation> operations = operationRepository.getOperationsByPeriod(accountNumber,
-        commonMapper.asEpochMilli(from), commonMapper.asEpochMilli(to));
-
+        commonMapper.asEpochSeconds(from), commonMapper.asEpochSeconds(to));
     BigDecimal amount = getAccountBalanceBeginOfMonth(date, accountNumber);
     for (Operation operation : operations) {
       switch (operation.getType()) {
@@ -182,8 +165,8 @@ public class OperationService {
     LocalDateTime fromBeginOfDay = LocalDateTime.of(date.withDayOfMonth(1), LocalTime.MIN);
     LocalDateTime fromEndOfDay = LocalDateTime.of(date.withDayOfMonth(1), LocalTime.MAX);
     List<AccountBalance> balances = accountBalanceRepository
-        .getAccountBalanceForPeriod(accountNumber, commonMapper.asEpochMilli(fromBeginOfDay),
-            commonMapper.asEpochMilli(fromEndOfDay));
+        .getAccountBalanceForPeriod(accountNumber, commonMapper.asEpochSeconds(fromBeginOfDay),
+            commonMapper.asEpochSeconds(fromEndOfDay));
     if (balances.size() > 1) {
       throw new InvalidDataException("Несколько записей баланса на начало месяца");
     }
@@ -191,15 +174,10 @@ public class OperationService {
     return balances.isEmpty() ? balance : balances.get(0).getAmount();
   }
 
-  private BigDecimal getAvgDailyBalance(String accountNumber) {
-    Account account = accountRepository.getAccount(accountNumber);
+  private BigDecimal getAvgDailyBalance(Account account) {
+    String accountNumber = account.getNumber();
     LocalDate openDate = commonMapper.asDateTime(account.getOpenDate()).toLocalDate();
-    LocalDate start;
-    if (openDate.compareTo(LocalDate.now().minusDays(30)) > 0) {
-      start = openDate;
-    } else {
-      start = LocalDate.now().minusDays(30);
-    }
+    LocalDate start = DateTimeUtil.getStartPeriod(openDate);
     LocalDate end = LocalDate.now();
     BigDecimal adb = BigDecimal.valueOf(0);
     for (LocalDate date = start; date.isBefore(end); date = date.plusDays(1)) {
@@ -210,9 +188,17 @@ public class OperationService {
     return adb.divide(BigDecimal.valueOf(daysBetween), HALF_UP);
   }
 
-  private void checkAccountNumber(String accountNumber) {
+  private String checkAccountNumber(Object account) {
+    String accountNumber = null;
+    if (account instanceof AccountNumberDto) {
+      accountNumber = ((AccountNumberDto) account).getAccountNumber();
+    }
+    if (account instanceof OperationSearchDto) {
+      accountNumber = ((OperationSearchDto) account).getAccountNumber();
+    }
     if (accountNumber == null || accountNumber.isBlank()) {
       throw new InvalidDataException("Отсутствует номер счета");
     }
+    return accountNumber;
   }
 }

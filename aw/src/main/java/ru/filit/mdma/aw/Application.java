@@ -1,4 +1,4 @@
-package ru.filit.mdma.config;
+package ru.filit.mdma.aw;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,17 +6,18 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 /**
- * Класс приложения Spring Boot.
+ * @author A.Khalitova 08-Dec-2021
  */
 @SpringBootApplication(scanBasePackages = {"ru.filit.mdma"})
-public class ApplicationConfig extends SpringBootServletInitializer {
+public class Application extends SpringBootServletInitializer {
 
   @Override
   protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-    return application.sources(ApplicationConfig.class);
+    return application.sources(Application.class);
   }
 
   public static void main(String[] args) {
-    SpringApplication.run(ApplicationConfig.class, args);
+    SpringApplication.run(Application.class, args);
   }
+
 }

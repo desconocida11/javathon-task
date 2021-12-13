@@ -15,10 +15,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommonMapperImpl {
 
-  public String asDto(Number in) {
-    return (in == null) ? null : in.toString();
-  }
-
   public String asDto(BigDecimal in) {
     return (in == null) ? null : in.setScale(2, HALF_UP).stripTrailingZeros().toPlainString();
   }
@@ -27,21 +23,12 @@ public class CommonMapperImpl {
     return Integer.parseInt(in);
   }
 
-  public BigDecimal asDecimalEntity(String in) {
-    return (in == null) ? null : new BigDecimal(in);
+  public Long asEpochSeconds(LocalDateTime dateTime) {
+    return dateTime.toEpochSecond(ZoneOffset.UTC);
   }
 
-  public Long asLongEntity(String in) {
-    return (in == null) ? null : Long.parseLong(in);
-  }
-
-  public Long asEpochMilli(LocalDateTime dateTime) {
-    return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-  }
-
-  public LocalDateTime asDateTime(Long epochMilli) {
-    Instant instant = Instant.ofEpochMilli(epochMilli);
-    LocalDateTime date = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
-    return date;
+  public LocalDateTime asDateTime(Long epochSeconds) {
+    Instant instant = Instant.ofEpochSecond(epochSeconds);
+    return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
   }
 }

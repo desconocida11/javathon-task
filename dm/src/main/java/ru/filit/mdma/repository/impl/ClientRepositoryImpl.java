@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Client;
@@ -24,7 +25,8 @@ import ru.filit.mdma.web.exception.ClientNotFoundException;
  * @author A.Khalitova 26-Nov-2021
  */
 @Repository
-public class ClientRepositoryImpl implements ClientRepository {
+@Slf4j
+public class ClientRepositoryImpl extends AbstractYmlRepository implements ClientRepository {
 
   @Value(value = "clients.yml")
   private String fileName;
@@ -43,7 +45,7 @@ public class ClientRepositoryImpl implements ClientRepository {
   @PostConstruct
   public void init() {
     final List<Client> clientList =
-        entityRepo.readList(getFile(), new TypeReference<>() {
+        entityRepo.readList(getFile(filePath, fileName), new TypeReference<>() {
         });
     clientList.forEach(client -> clients.putIfAbsent(client.getId(), client));
   }
@@ -87,13 +89,9 @@ public class ClientRepositoryImpl implements ClientRepository {
   }
 
   private Long getLongForStartOfTheDay(Long timestamp) {
-    Instant instant = Instant.ofEpochMilli(timestamp);
+    Instant instant = Instant.ofEpochSecond(timestamp);
     LocalDate date = LocalDate.ofInstant(instant, ZoneId.of("UTC"));
     LocalDateTime dateTime = LocalDateTime.of(date, LocalTime.of(0, 0, 0, 0));
-    return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-  }
-
-  private String getFile() {
-    return filePath + fileName;
+    return dateTime.toEpochSecond(ZoneOffset.UTC);
   }
 }

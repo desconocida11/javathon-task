@@ -22,7 +22,6 @@ public class IgniteConfig {
       cfg.setIgniteInstanceName("igniteInstance");
       CacheConfiguration<String, String> cacheCfg = new CacheConfiguration<>();
       cacheCfg.setName("cache");
-      // TODO need of Expiry policy?
       cacheCfg.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.THIRTY_MINUTES));
 
       TcpDiscoverySpi spi = new TcpDiscoverySpi();
@@ -31,15 +30,6 @@ public class IgniteConfig {
       ipFinder.setAddresses(Arrays.asList("127.0.0.1", "127.0.0.1:47500..47509"));
       spi.setIpFinder(ipFinder);
 
-      // TODO also this warn msg while debugging
-      // https://apacheignite.readme.io/docs/jvm-and-system-tuning
-      // WARN  org.apache.ignite.internal.IgniteKernal%igniteInstance :
-      // Possible too long JVM pause: 5897 milliseconds.
-
-      // TODO check this
-      //Message queue limit is set to 0 which may lead to potential OOMEs
-      // when running cache operations in FULL_ASYNC or PRIMARY_SYNC modes
-      // due to message queues growth on sender and receiver sides.
       TcpCommunicationSpi tcpCommunicationSPI = new TcpCommunicationSpi();
       tcpCommunicationSPI.setMessageQueueLimit(1024);
 

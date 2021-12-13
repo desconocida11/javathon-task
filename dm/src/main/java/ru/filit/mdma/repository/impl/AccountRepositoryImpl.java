@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.Account;
@@ -16,8 +17,10 @@ import ru.filit.mdma.web.exception.AccountNotFoundException;
 /**
  * @author A.Khalitova 29-Nov-2021
  */
+@Slf4j
 @Repository
-public class AccountRepositoryImpl implements AccountRepository {
+public class AccountRepositoryImpl extends AbstractYmlRepository
+    implements AccountRepository {
 
   @Value(value = "accounts.yml")
   private String fileName;
@@ -36,7 +39,7 @@ public class AccountRepositoryImpl implements AccountRepository {
   @PostConstruct
   public void init() {
     final List<Account> accountList =
-        entityRepo.readList(getFile(), new TypeReference<List<Account>>() {
+        entityRepo.readList(getFile(filePath, fileName), new TypeReference<>() {
         });
     accounts.addAll(accountList);
   }
@@ -54,9 +57,5 @@ public class AccountRepositoryImpl implements AccountRepository {
         .filter(account -> account.getNumber().equals(accountNumber))
         .findFirst();
     return optionalAccount.orElseThrow(() -> new AccountNotFoundException("Account not found"));
-  }
-
-  private String getFile() {
-    return filePath + fileName;
   }
 }

@@ -1,7 +1,7 @@
 package ru.filit.mdma.model.audit.kafka;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.OptionalInt;
 import java.util.Random;
 import lombok.Getter;
@@ -31,8 +31,8 @@ public class AuditMessage implements Serializable {
   private String request;
 
   public AuditMessage(String userName, String methodName, String body, boolean isRequest) {
-    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    this.timestamp = String.valueOf(timestamp.getTime());
+    long timestamp = Instant.now().getEpochSecond();
+    this.timestamp = String.valueOf(timestamp);
     this.id = generateId();
     this.userName = userName;
     this.methodName = methodName;

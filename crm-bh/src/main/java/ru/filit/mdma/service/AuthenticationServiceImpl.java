@@ -2,11 +2,13 @@ package ru.filit.mdma.service;
 
 import java.util.Collection;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -32,7 +34,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
       }
     }
-    return null;
+    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+        "Unable to get current user's role.");
   }
 
   private Authentication getAuthentication() {

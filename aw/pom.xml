@@ -6,7 +6,7 @@
 
     <artifactId>aw</artifactId>
     <version>1.0</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
 
     <name>Audit Writer</name>
 

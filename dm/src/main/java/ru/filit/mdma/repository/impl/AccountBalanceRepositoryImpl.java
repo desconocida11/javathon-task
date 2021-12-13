@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.filit.mdma.model.entity.AccountBalance;
@@ -15,7 +16,9 @@ import ru.filit.mdma.service.EntityRepo;
  * @author A.Khalitova 30-Nov-2021
  */
 @Repository
-public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
+@Slf4j
+public class AccountBalanceRepositoryImpl extends AbstractYmlRepository
+    implements AccountBalanceRepository {
 
   @Value(value = "balances.yml")
   private String fileName;
@@ -34,7 +37,7 @@ public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
   @PostConstruct
   public void init() {
     final List<AccountBalance> accountBalancesList =
-        entityRepo.readList(getFile(), new TypeReference<>() {
+        entityRepo.readList(getFile(filePath, fileName), new TypeReference<>() {
         });
     accountBalances.addAll(accountBalancesList);
   }
@@ -53,9 +56,5 @@ public class AccountBalanceRepositoryImpl implements AccountBalanceRepository {
             && accountBalance.getBalanceDate().compareTo(from) >= 0
             && accountBalance.getBalanceDate().compareTo(to) <= 0)
         .collect(Collectors.toList());
-  }
-
-  private String getFile() {
-    return filePath + fileName;
   }
 }
