@@ -30,10 +30,11 @@ public class AuditMessage implements Serializable {
 
   private String request;
 
-  public AuditMessage(String userName, String methodName, String body, boolean isRequest) {
+  public AuditMessage(String userName, String methodName, String body, boolean isRequest,
+      String id) {
     long timestamp = Instant.now().getEpochSecond();
     this.timestamp = String.valueOf(timestamp);
-    this.id = generateId();
+    this.id = id;
     this.userName = userName;
     this.methodName = methodName;
     this.body = body;
@@ -42,17 +43,5 @@ public class AuditMessage implements Serializable {
     } else {
       this.request = "<";
     }
-  }
-
-  private String generateId() {
-    final int min = 10_000_000;
-    final int max = 99_999_999;
-    Random random = new Random();
-    OptionalInt optionalInt = random.ints(min, (max + 1)).findFirst();
-    if (optionalInt.isPresent()) {
-      return String.valueOf(optionalInt.getAsInt());
-    }
-    // TODO what if not present?
-    return "12345678";
   }
 }

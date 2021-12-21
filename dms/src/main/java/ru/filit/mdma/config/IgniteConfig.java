@@ -33,6 +33,7 @@ public class IgniteConfig {
       TcpCommunicationSpi tcpCommunicationSPI = new TcpCommunicationSpi();
       tcpCommunicationSPI.setMessageQueueLimit(1024);
 
+      cfg.setMetricsLogFrequency(0);
       cfg.setCommunicationSpi(tcpCommunicationSPI);
       cfg.setDiscoverySpi(spi);
       cfg.setCacheConfiguration(cacheCfg);

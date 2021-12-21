@@ -84,8 +84,15 @@ public abstract class DtoMapper {
   })
   public abstract AccountDto accountToAccountDto(Account account);
 
-  @Mapping(target = "operDate",
-      expression = "java(fromInstant(operation.getOperDate(), true, \"Europe/Moscow\"))")
+  @Mappings(value = {
+      @Mapping(target = "operDate",
+          expression = "java(fromInstant(operation.getOperDate(), true, \"UTC\"))"),
+      @Mapping(target = "amount",
+          expression = "java("
+              + "(operation.getAmount() == null) ? null "
+              + ": operation.getAmount().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()"
+              + ")")
+  })
   public abstract OperationDto operationToOperationDto(Operation operation);
 
   public abstract AccessDto accessToAccessDto(Access access);

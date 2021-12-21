@@ -6,10 +6,10 @@ import java.math.BigDecimal;
  * @author A.Khalitova 30-Nov-2021
  */
 public enum ClientLevel {
-  LOW("Low"),
-  MIDDLE("Middle"),
-  SILVER("Silver"),
-  GOLD("Gold");
+  LOW("LOW"),
+  MIDDLE("MIDDLE"),
+  SILVER("SILVER"),
+  GOLD("GOLD");
 
   private final String value;
   private static final BigDecimal levelMiddle = BigDecimal.valueOf(30_000);

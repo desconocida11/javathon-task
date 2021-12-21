@@ -29,3 +29,9 @@ spring:
 dm:
   last-operations:
     quantity: 3
+
+system:
+  element:
+    dm:
+      host: localhost
+      port: 8081

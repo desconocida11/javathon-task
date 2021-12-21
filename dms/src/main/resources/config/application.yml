@@ -42,3 +42,12 @@ ignite:
 audit:
   kafka:
     topic-name: "dm-audit"
+
+system:
+  element:
+    dm:
+      host: localhost
+      port: 8082
+    queue:
+      host: localhost
+      port: 9092

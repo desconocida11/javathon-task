@@ -3,9 +3,11 @@ package ru.filit.mdma.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.ConnectException;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +18,8 @@ import reactor.core.publisher.Mono;
 import ru.filit.mdma.model.audit.kafka.AuditMessage;
 import ru.filit.mdma.model.audit.kafka.MessageProducer;
 import ru.filit.mdma.model.cache.TokenService;
+import ru.filit.mdma.web.ServiceUnavailableException;
+import ru.filit.mdma.web.TokenUtil;
 import ru.filit.mdma.web.dto.AccessDto;
 import ru.filit.mdma.web.dto.AccessRequestDto;
 import ru.filit.mdma.web.dto.AccountDto;
@@ -34,7 +38,6 @@ import ru.filit.mdma.web.dto.OperationSearchDto;
  * @author A.Khalitova 03-Dec-2021
  */
 @Service
-@AllArgsConstructor
 @Slf4j
 public class DmsServiceImpl implements ClientService, AccountService, AccessService {
 
@@ -42,6 +45,18 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   private final ObjectMapper objectMapper;
   private final TokenService tokenService;
   private final MessageProducer messageProducer;
+
+  @Value("${server.servlet.context-path}")
+  private String contextPath;
+
+  @Autowired
+  public DmsServiceImpl(WebClient webClient, ObjectMapper objectMapper,
+      TokenService tokenService, MessageProducer messageProducer) {
+    this.webClient = webClient;
+    this.objectMapper = objectMapper;
+    this.tokenService = tokenService;
+    this.messageProducer = messageProducer;
+  }
 
   @Override
   public List<AccessDto> getAccess(AccessRequestDto accessRequestDto) {
@@ -51,8 +66,9 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     }
     RequestBuilder<List<AccessDto>, AccessRequestDto> requestBuilder = new RequestBuilder<>();
     Mono<List<AccessDto>> entity = requestBuilder
-        .sendRequest("/access", accessRequestDto);
-    List<AccessDto> accessDtos =  objectMapper.convertValue(entity.block(), new TypeReference<>() {
+        .sendRequest("/access", accessRequestDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
+    List<AccessDto> accessDtos = objectMapper.convertValue(entity.block(), new TypeReference<>() {
     });
     if (accessDtos == null) {
       throw new ResponseStatusException(
@@ -65,9 +81,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public List<AccountDto> getAccount(ClientIdDto clientIdDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(clientIdDto, accessAudit, "client");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account",
-          objectMapper.writeValueAsString(clientIdDto), true));
+          objectMapper.writeValueAsString(clientIdDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -75,7 +92,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<List<AccountDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<List<AccountDto>> entity = requestBuilder
-        .sendRequest("/client/account", clientIdDto);
+        .sendRequest("/client/account", clientIdDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     List<AccountDto> accountDtos = objectMapper.convertValue(entity.block(), new TypeReference<>() {
     });
     if (accountDtos == null) {
@@ -86,7 +104,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(accountDtos, accessAudit, "account");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account",
-          objectMapper.writeValueAsString(accountDtos), false));
+          objectMapper.writeValueAsString(accountDtos), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -98,9 +116,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public CurrentBalanceDto getAccountBalance(AccountNumberDto accountNumberDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(accountNumberDto, accessAudit, "accountNumber");
+    final String auditId = TokenUtil.generateId();
     try {
-      messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/operation",
-          objectMapper.writeValueAsString(accountNumberDto), true));
+      messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/balance",
+          objectMapper.writeValueAsString(accountNumberDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -108,7 +127,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(accountNumberDto);
     RequestBuilder<CurrentBalanceDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
     Mono<CurrentBalanceDto> entity = requestBuilder
-        .sendRequest("/client/account/balance", accountNumberDto);
+        .sendRequest("/client/account/balance", accountNumberDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     CurrentBalanceDto currentBalance = objectMapper.convertValue(entity.block(),
         new TypeReference<>() {
         });
@@ -119,7 +139,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(currentBalance, accessAudit, "currentBalance");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/balance",
-          objectMapper.writeValueAsString(currentBalance), false));
+          objectMapper.writeValueAsString(currentBalance), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -131,9 +151,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public List<OperationDto> getAccountOperations(OperationSearchDto operationSearchDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(operationSearchDto, accessAudit, "operationSearch");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/operation",
-          objectMapper.writeValueAsString(operationSearchDto), true));
+          objectMapper.writeValueAsString(operationSearchDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -141,7 +162,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(operationSearchDto);
     RequestBuilder<List<OperationDto>, OperationSearchDto> requestBuilder = new RequestBuilder<>();
     Mono<List<OperationDto>> entity = requestBuilder
-        .sendRequest("/client/account/operation", operationSearchDto);
+        .sendRequest("/client/account/operation", operationSearchDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     List<OperationDto> operations = objectMapper.convertValue(entity.block(),
         new TypeReference<>() {
         });
@@ -153,7 +175,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(operations, accessAudit, "operation");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/operation",
-          objectMapper.writeValueAsString(operations), false));
+          objectMapper.writeValueAsString(operations), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -165,9 +187,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public List<ClientDto> findClient(ClientSearchDto clientSearchDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(clientSearchDto, accessAudit, "client");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client",
-          objectMapper.writeValueAsString(clientSearchDto), true));
+          objectMapper.writeValueAsString(clientSearchDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -175,7 +198,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(clientSearchDto);
     RequestBuilder<List<ClientDto>, ClientSearchDto> requestBuilder = new RequestBuilder<>();
     Mono<List<ClientDto>> entity = requestBuilder
-        .sendRequest("/client", clientSearchDto);
+        .sendRequest("/client", clientSearchDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     List<ClientDto> clientDtos = objectMapper
         .convertValue(entity.block(), new TypeReference<>() {
         });
@@ -187,7 +211,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(clientDtos, accessAudit, "client");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client",
-          objectMapper.writeValueAsString(clientDtos), false));
+          objectMapper.writeValueAsString(clientDtos), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -200,9 +224,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public ClientLevelDto getClientLevel(ClientIdDto clientIdDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(clientIdDto, accessAudit, "client");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/level",
-          objectMapper.writeValueAsString(clientIdDto), true));
+          objectMapper.writeValueAsString(clientIdDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -210,7 +235,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<ClientLevelDto, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<ClientLevelDto> entity = requestBuilder
-        .sendRequest("/client/level", clientIdDto);
+        .sendRequest("/client/level", clientIdDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     ClientLevelDto clientLevelDto = objectMapper
         .convertValue(entity.block(), new TypeReference<>() {
         });
@@ -222,7 +248,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(clientLevelDto, accessAudit, "clientLevel");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/level",
-          objectMapper.writeValueAsString(clientLevelDto), false));
+          objectMapper.writeValueAsString(clientLevelDto), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -235,9 +261,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public List<ContactDto> getContact(ClientIdDto clientIdDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(clientIdDto, accessAudit, "client");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/contact",
-          objectMapper.writeValueAsString(clientIdDto), true));
+          objectMapper.writeValueAsString(clientIdDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -245,7 +272,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(clientIdDto);
     RequestBuilder<List<ContactDto>, ClientIdDto> requestBuilder = new RequestBuilder<>();
     Mono<List<ContactDto>> entity = requestBuilder
-        .sendRequest("/client/contact", clientIdDto);
+        .sendRequest("/client/contact", clientIdDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     List<ContactDto> contacts = objectMapper
         .convertValue(entity.block(), new TypeReference<>() {
         });
@@ -257,7 +285,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(contacts, accessAudit, "contact");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/contact",
-          objectMapper.writeValueAsString(contacts), false));
+          objectMapper.writeValueAsString(contacts), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -269,9 +297,10 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   public ContactDto saveContact(ContactDto contactDto, List<AccessDto> access,
       String crMUserName, List<AccessDto> accessAudit) {
     tokenService.tokenizeObject(contactDto, accessAudit, "contact");
+    final String auditId = TokenUtil.generateId();
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/contact/save",
-          objectMapper.writeValueAsString(contactDto), true));
+          objectMapper.writeValueAsString(contactDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -279,7 +308,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(contactDto);
     RequestBuilder<ContactDto, ContactDto> requestBuilder = new RequestBuilder<>();
     Mono<ContactDto> entity = requestBuilder
-        .sendRequest("/client/contact/save", contactDto);
+        .sendRequest("/client/contact/save", contactDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     ContactDto contact = objectMapper
         .convertValue(entity.block(), new TypeReference<>() {
         });
@@ -291,7 +321,7 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.tokenizeObject(contact, accessAudit, "contact");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/contact/save",
-          objectMapper.writeValueAsString(contact), false));
+          objectMapper.writeValueAsString(contact), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -302,11 +332,11 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   @Override
   public LoanPaymentDto getLoanPayment(AccountNumberDto accountNumberDto,
       List<AccessDto> access, String crMUserName, List<AccessDto> accessAudit) {
-
+    final String auditId = TokenUtil.generateId();
     tokenService.tokenizeObject(accountNumberDto, accessAudit, "accountNumber");
     try {
       messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/loan-payment",
-          objectMapper.writeValueAsString(accountNumberDto), true));
+          objectMapper.writeValueAsString(accountNumberDto), true, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -314,7 +344,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
     tokenService.detokenizeObject(accountNumberDto);
     RequestBuilder<LoanPaymentDto, AccountNumberDto> requestBuilder = new RequestBuilder<>();
     Mono<LoanPaymentDto> entity = requestBuilder
-        .sendRequest("/client/account/loan-payment", accountNumberDto);
+        .sendRequest("/client/account/loan-payment", accountNumberDto)
+        .onErrorMap(this::checkRootCause, t -> new ServiceUnavailableException());
     LoanPaymentDto loanPayment = objectMapper
         .convertValue(entity.block(), new TypeReference<>() {
         });
@@ -325,8 +356,9 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
 
     tokenService.tokenizeObject(loanPayment, accessAudit, "loanPayment");
     try {
-      messageProducer.sendMessage(getAuditMessage(crMUserName, "/client/account/loan-payment",
-          objectMapper.writeValueAsString(loanPayment), false));
+      messageProducer.sendMessage(getAuditMessage(crMUserName,
+          "/client/account/loan-payment",
+          objectMapper.writeValueAsString(loanPayment), false, auditId));
     } catch (JsonProcessingException e) {
       log.info("Failed to send message to audit");
     }
@@ -335,14 +367,24 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
   }
 
   private String getAuditMessage(String userName, String methodName, String body,
-      boolean isRequest) {
-    AuditMessage message = new AuditMessage(userName, methodName, body, isRequest);
+      boolean isRequest, String id) {
+    AuditMessage message = new AuditMessage(userName, contextPath + methodName,
+        body, isRequest, id);
     try {
       return objectMapper.writeValueAsString(message);
     } catch (JsonProcessingException e) {
       log.warn("Exception while writing value as string to audit");
     }
     return null;
+  }
+
+  private boolean checkRootCause(Throwable t) {
+    Throwable rootCause = t;
+    while (rootCause.getCause() != null && rootCause.getCause() != rootCause &&
+        !rootCause.getClass().equals(ConnectException.class)) {
+      rootCause = rootCause.getCause();
+    }
+    return rootCause.getClass().equals(ConnectException.class);
   }
 
   private class RequestBuilder<T, B> {
@@ -365,7 +407,8 @@ public class DmsServiceImpl implements ClientService, AccountService, AccessServ
                     error.getLocalizedMessage());
                 log.info("Text {}", error.toString());
                 return Mono.error(
-                    new ResponseStatusException(error.getStatusCode(), error.getResponseBodyAsString()));
+                    new ResponseStatusException(error.getStatusCode(),
+                        error.getResponseBodyAsString()));
               });
             }
           });

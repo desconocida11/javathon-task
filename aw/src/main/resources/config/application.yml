@@ -9,4 +9,12 @@ spring:
       auto-offset-reset: earliest
 
 server:
-  port: 9090
+  port: 8083
+  servlet:
+    context-path: /aw
+
+system:
+  element:
+    queue:
+      host: localhost
+      port: 9092

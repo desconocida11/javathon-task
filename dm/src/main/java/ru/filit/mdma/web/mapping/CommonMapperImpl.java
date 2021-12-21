@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class CommonMapperImpl {
 
   public String asDto(BigDecimal in) {
-    return (in == null) ? null : in.setScale(2, HALF_UP).stripTrailingZeros().toPlainString();
+    return (in == null) ? null : in.setScale(2, HALF_UP).toPlainString();
   }
 
   public Integer asInt(String in) {
